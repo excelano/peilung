@@ -18,9 +18,9 @@ struct RootView: View {
         @Bindable var navigator = navigator
         NavigationStack {
             TabView(selection: $navigator.page) {
+                NavigateView().tag(Page.navigate)
                 OdometerView().tag(Page.odometer)
                 HereView().tag(Page.here)
-                NavigateView().tag(Page.navigate)
                 MarksView().tag(Page.marks)
             }
             .tabViewStyle(.verticalPage)

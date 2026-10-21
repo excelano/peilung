@@ -12,6 +12,7 @@ struct NavigateView: View {
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
     @State private var entry: Entry?
     @State private var hold = BearingHold()
+    @State private var isConfirmingStop = false
 
     enum Entry: Identifiable {
         case coordinates, bearing
@@ -32,10 +33,9 @@ struct NavigateView: View {
                     bearingGuidance(along: line, at: context.date)
                 }
             case nil:
-                noGoal
+                compass
             }
         }
-        .navigationTitle("Navigate")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Bearing", systemImage: "location.north.line") { entry = .bearing }
@@ -59,6 +59,9 @@ struct NavigateView: View {
                 }
             }
         }
+        .confirmationDialog("Stop navigating?", isPresented: $isConfirmingStop) {
+            Button("Stop", role: .destructive) { navigator.clear() }
+        }
         .onChange(of: location.heading) { cueDrift() }
         .onAppear {
             cueDrift()
@@ -68,19 +71,49 @@ struct NavigateView: View {
         }
     }
 
-    private var noGoal: some View {
-        VStack(spacing: 8) {
-            Text("Nowhere to go yet").font(.headline)
-            Text("Take a bearing, enter coordinates, or pick a mark.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            HStack {
-                Button("Bearing") { entry = .bearing }
-                Button("Coordinates") { entry = .coordinates }
+    /// With nowhere to go, a plain compass: the arrow is where the watch points.
+    private var compass: some View {
+        VStack(spacing: 2) {
+            if !isLuminanceReduced {
+                CompassView(
+                    arrow: location.heading == nil ? nil : 0,
+                    north: -(location.heading ?? 0),
+                    marker: .arrow(onCourse: false)
+                )
+                .frame(maxHeight: .infinity)
             }
-            .font(.footnote)
+            Text(location.heading.map(north.text) ?? "No compass")
+                .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if let warning = CompassWarning.text(location.headingAccuracy) {
+                compassWarning(warning)
+            }
         }
+    }
+
+    /// The goal's name; tapping it offers to stop navigating.
+    private func goalTitle(_ title: String) -> some View {
+        Button {
+            isConfirmingStop = true
+        } label: {
+            HStack(spacing: 3) {
+                Text(title).lineLimit(1)
+                Image(systemName: "xmark.circle.fill")
+            }
+            .font(.footnote.monospacedDigit())
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func compassWarning(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundStyle(.orange)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.7)
     }
 
     @ViewBuilder
@@ -91,10 +124,7 @@ struct NavigateView: View {
         let isNear = distance.map { $0 < Compass.nearTargetMeters } ?? false
 
         VStack(spacing: 2) {
-            Text(target.name)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            goalTitle(target.name)
             if !isLuminanceReduced {
                 CompassView(
                     arrow: isNear ? nil : bearing.map { $0 - (location.heading ?? 0) },
@@ -127,9 +157,7 @@ struct NavigateView: View {
         let offset = location.freshLocation(at: now).flatMap { line.offset(of: Coordinate($0.coordinate)) }
 
         VStack(spacing: 2) {
-            Text("Bearing " + north.text(line.bearing))
-                .font(.footnote.monospacedDigit())
-                .foregroundStyle(.secondary)
+            goalTitle("Bearing " + north.text(line.bearing))
             if !isLuminanceReduced {
                 CompassView(
                     arrow: deviation ?? line.bearing,
@@ -160,12 +188,7 @@ struct NavigateView: View {
                     .minimumScaleFactor(0.7)
             }
             if let warning = CompassWarning.text(location.headingAccuracy) {
-                Text(warning)
-                    .font(.footnote)
-                    .foregroundStyle(.orange)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
+                compassWarning(warning)
             }
         }
     }

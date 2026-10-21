@@ -20,13 +20,15 @@ struct Coordinate: Codable, Equatable, Sendable {
     var latitudeText: String { Geocache.format(latitude, isLatitude: true) }
     var longitudeText: String { Geocache.format(longitude, isLatitude: false) }
 
-    var location: CLLocation {
-        CLLocation(latitude: latitude, longitude: longitude)
-    }
-
-    /// Meters, from Core Location's ellipsoidal distance.
+    /// Meters along the great circle (haversine, mean Earth radius). Core Location's
+    /// own distance is not safe to call from several threads at once.
     func distance(to other: Coordinate) -> Double {
-        location.distance(from: other.location)
+        let φ1 = latitude * .pi / 180
+        let φ2 = other.latitude * .pi / 180
+        let Δφ = φ2 - φ1
+        let Δλ = (other.longitude - longitude) * .pi / 180
+        let a = sin(Δφ / 2) * sin(Δφ / 2) + cos(φ1) * cos(φ2) * sin(Δλ / 2) * sin(Δλ / 2)
+        return 2 * 6_371_008.8 * asin(min(1, sqrt(a)))
     }
 
     /// Initial great-circle bearing in degrees, 0 ..< 360, clockwise from true north.

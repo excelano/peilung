@@ -9,8 +9,9 @@ import Foundation
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
 /// the location prompt:
 ///
-///     --demo odometer|here|navigate|bearing|marks   fixed position and compass, a running
-///                                                   odometer, marks, and a point or bearing goal
+///     --demo compass|navigate|bearing|odometer|here|marks   fixed position and compass, a running
+///                                                           odometer, marks, and no goal, a point
+///                                                           or a bearing
 ///     --entry coordinates|bearing                   also opens that entry sheet on Navigate
 enum Demo {
     static let here = Coordinate(latitude: 29.75205, longitude: -95.3742667)
@@ -27,7 +28,7 @@ enum Demo {
         switch scene {
         case "odometer": .odometer
         case "here": .here
-        case "navigate", "bearing": .navigate
+        case "compass", "navigate", "bearing": .navigate
         case "marks": .marks
         default: nil
         }
@@ -60,10 +61,13 @@ enum Demo {
         contents.nextNumber = 4
         marks.save(contents)
 
-        if scene == "bearing" {
+        switch scene {
+        case "compass":
+            goal.save(nil)
+        case "bearing":
             // Taken 220 m back along 074° true; here is now 14 m left of the line.
             goal.save(.bearing(BearingLine(bearing: 74, origin: offset(north: -74.1, east: -207.6))))
-        } else {
+        default:
             goal.save(.point(Target(name: "GC7XQ2M", coordinate: offset(north: 140, east: 190))))
         }
     }

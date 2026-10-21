@@ -147,3 +147,28 @@ struct BearingHoldTests {
         #expect(hold.update(deviation: 345) == .turnLeft)
     }
 }
+
+@MainActor
+struct NavigatorTests {
+    let defaults = UserDefaults(suiteName: "NavigatorTests-\(UUID().uuidString)")!
+
+    @Test func opensOnNavigateFirstTime() {
+        #expect(Navigator(store: Store(url: temporaryURL()), defaults: defaults).page == .navigate)
+    }
+
+    @Test func reopensOnTheLastPage() {
+        let navigator = Navigator(store: Store(url: temporaryURL()), defaults: defaults)
+        navigator.page = .odometer
+        #expect(Navigator(store: Store(url: temporaryURL()), defaults: defaults).page == .odometer)
+    }
+
+    @Test func clearForgetsTheGoal() {
+        let url = temporaryURL()
+        let navigator = Navigator(store: Store(url: url), defaults: defaults)
+        navigator.follow(BearingLine(bearing: 90, origin: nil))
+        #expect(navigator.page == .navigate)
+        navigator.clear()
+        #expect(navigator.goal == nil)
+        #expect(Navigator(store: Store(url: url), defaults: defaults).goal == nil)
+    }
+}
