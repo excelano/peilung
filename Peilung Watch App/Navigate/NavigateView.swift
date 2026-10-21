@@ -14,6 +14,8 @@ struct NavigateView: View {
     @State private var entry: Entry?
     @State private var hold = BearingHold()
     @State private var arrival = Arrival()
+    /// Whether the watch points at the target, for the green arrow; no taps.
+    @State private var aim = BearingHold()
     @State private var pendingDrift: Task<Void, Never>?
     /// Whether the last tap said on bearing, so a swing out and back that settles where it began stays quiet.
     @State private var announcedOn = false
@@ -81,9 +83,16 @@ struct NavigateView: View {
             hold = BearingHold()
             announcedOn = false
             arrival = Arrival()
+            aim = BearingHold()
         }
-        .onChange(of: location.magneticHeading) { cueDrift() }
-        .onChange(of: location.location?.timestamp) { cueArrival() }
+        .onChange(of: location.magneticHeading) {
+            cueDrift()
+            updateAim()
+        }
+        .onChange(of: location.location?.timestamp) {
+            cueArrival()
+            updateAim()
+        }
         .onChange(of: scenePhase) {
             stopPendingDrift()
             cueDrift()
@@ -173,7 +182,7 @@ struct NavigateView: View {
                 CompassView(
                     arrow: isNear ? nil : bearing.map { $0 - (trueHeading ?? 0) },
                     north: -(shownHeading ?? 0),
-                    marker: isNear ? .scope : .arrow(onCourse: false)
+                    marker: isNear ? .scope : .arrow(onCourse: trueHeading != nil && aim.isOn)
                 )
                 .frame(maxHeight: .infinity)
             }
@@ -240,6 +249,13 @@ struct NavigateView: View {
 
     /// Cues tap only while the screen is up, so a swinging arm with the wrist down stays quiet.
     private var canCue: Bool { scenePhase == .active && !isLuminanceReduced }
+
+    private func updateAim() {
+        guard case .point(let target) = navigator.goal, let fix = location.freshLocation(),
+              let magnetic = location.magneticHeading else { return }
+        let trueHeading = North(reference, declination: location.declination).trueBearing(magnetic: magnetic) ?? magnetic
+        _ = aim.update(deviation: Coordinate(fix.coordinate).bearing(to: target.coordinate) - trueHeading)
+    }
 
     private func cueArrival() {
         guard canCue, case .point(let target) = navigator.goal, let fix = location.freshLocation() else { return }
