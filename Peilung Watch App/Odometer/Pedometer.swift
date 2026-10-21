@@ -39,7 +39,7 @@ final class MotionPedometer: Pedometer {
     }
 
     func startUpdates(from start: Date, handler: @escaping @MainActor (Result<Double, Error>) -> Void) {
-        pedometer.startUpdates(from: start) { data, error in
+        pedometer.startUpdates(from: start) { @Sendable data, error in
             let result = Self.result(data, error)
             Task { @MainActor in handler(result) }
         }
@@ -51,7 +51,7 @@ final class MotionPedometer: Pedometer {
 
     func distance(from start: Date, to end: Date) async throws -> Double {
         try await withCheckedThrowingContinuation { continuation in
-            pedometer.queryPedometerData(from: start, to: end) { data, error in
+            pedometer.queryPedometerData(from: start, to: end) { @Sendable data, error in
                 continuation.resume(with: Self.result(data, error))
             }
         }
