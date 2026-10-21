@@ -39,6 +39,7 @@ final class MotionPedometer: Pedometer {
     }
 
     func startUpdates(from start: Date, handler: @escaping @MainActor (Result<Double, Error>) -> Void) {
+        pedometer.stopUpdates()
         pedometer.startUpdates(from: start) { @Sendable data, error in
             let result = Self.result(data, error)
             Task { @MainActor in handler(result) }

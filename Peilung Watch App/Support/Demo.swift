@@ -65,8 +65,8 @@ enum Demo {
         case "compass":
             goal.save(nil)
         case "bearing":
-            // Taken 220 m back along 074° true; here is now 14 m left of the line.
-            goal.save(.bearing(BearingLine(bearing: 74, origin: offset(north: -74.1, east: -207.6))))
+            // Taken 220 m back along 074° true (072° magnetic); here is now 14 m left of the line.
+            goal.save(.bearing(BearingLine(magnetic: 72, origin: offset(north: -74.1, east: -207.6))))
         default:
             goal.save(.point(Target(name: "GC7XQ2M", coordinate: offset(north: 140, east: 190))))
         }
@@ -79,7 +79,7 @@ enum Demo {
             altitude: 15, horizontalAccuracy: 4, verticalAccuracy: 6,
             timestamp: .distantFuture
         )
-        location.simulate(fix, heading: scene == "bearing" ? 71 : 20, declination: 2, accuracy: 8)
+        location.simulate(fix, magneticHeading: scene == "bearing" ? 69 : 18, declination: 2, accuracy: 8)
         navigator.page = page
     }
 

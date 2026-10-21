@@ -8,6 +8,7 @@ struct NavigateView: View {
     @Environment(LocationModel.self) private var location
     @Environment(Navigator.self) private var navigator
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage(Units.storageKey) private var units = Units.localeDefault
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
     @State private var entry: Entry?
@@ -20,6 +21,9 @@ struct NavigateView: View {
     }
 
     private var north: North { North(reference, declination: location.declination) }
+
+    /// The heading as shown, which also turns the ring so its N is the chosen north.
+    private var shownHeading: Double? { location.magneticHeading.map { north.shown(magnetic: $0) } }
 
     var body: some View {
         Group {
@@ -62,7 +66,8 @@ struct NavigateView: View {
         .confirmationDialog("Stop navigating?", isPresented: $isConfirmingStop) {
             Button("Stop", role: .destructive) { navigator.clear() }
         }
-        .onChange(of: location.heading) { cueDrift() }
+        .onChange(of: location.magneticHeading) { cueDrift() }
+        .onChange(of: scenePhase) { cueDrift() }
         .onAppear {
             cueDrift()
             #if DEBUG
@@ -76,13 +81,13 @@ struct NavigateView: View {
         VStack(spacing: 2) {
             if !isLuminanceReduced {
                 CompassView(
-                    arrow: location.heading == nil ? nil : 0,
-                    north: -(location.heading ?? 0),
+                    arrow: shownHeading == nil ? nil : 0,
+                    north: -(shownHeading ?? 0),
                     marker: .arrow(onCourse: false)
                 )
                 .frame(maxHeight: .infinity)
             }
-            Text(location.heading.map(north.text) ?? "No compass")
+            Text(location.magneticHeading.map { north.text(magnetic: $0) } ?? "No compass")
                 .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -118,17 +123,18 @@ struct NavigateView: View {
 
     @ViewBuilder
     private func pointGuidance(to target: Target, at now: Date) -> some View {
-        let here = location.freshLocation(at: now).map { Coordinate($0.coordinate) }
+        let here = location.freshLocation(at: now, dimmed: isLuminanceReduced).map { Coordinate($0.coordinate) }
         let distance = here?.distance(to: target.coordinate)
         let bearing = here?.bearing(to: target.coordinate)
         let isNear = distance.map { $0 < Compass.nearTargetMeters } ?? false
+        let trueHeading = location.magneticHeading.map { north.trueBearing(magnetic: $0) ?? $0 }
 
         VStack(spacing: 2) {
             goalTitle(target.name)
             if !isLuminanceReduced {
                 CompassView(
-                    arrow: isNear ? nil : bearing.map { $0 - (location.heading ?? 0) },
-                    north: -(location.heading ?? 0),
+                    arrow: isNear ? nil : bearing.map { $0 - (trueHeading ?? 0) },
+                    north: -(shownHeading ?? 0),
                     marker: isNear ? .scope : .arrow(onCourse: false)
                 )
                 .frame(maxHeight: .infinity)
@@ -138,7 +144,7 @@ struct NavigateView: View {
                     .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                Text(isNear ? units.format(meters: distance) : north.text(bearing) + (location.heading == nil ? " · north up" : ""))
+                Text(isNear ? units.format(meters: distance) : north.text(true: bearing) + (trueHeading == nil ? " · north up" : ""))
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(.secondary)
             } else if location.location == nil {
@@ -153,15 +159,16 @@ struct NavigateView: View {
 
     @ViewBuilder
     private func bearingGuidance(along line: BearingLine, at now: Date) -> some View {
-        let deviation = location.heading.map { Compass.signed(line.bearing - $0) }
-        let offset = location.freshLocation(at: now).flatMap { line.offset(of: Coordinate($0.coordinate)) }
+        let deviation = location.magneticHeading.map { Compass.signed(line.magnetic - $0) }
+        let offset = location.freshLocation(at: now, dimmed: isLuminanceReduced)
+            .flatMap { line.offset(of: Coordinate($0.coordinate), declination: location.declination) }
 
         VStack(spacing: 2) {
-            goalTitle("Bearing " + north.text(line.bearing))
+            goalTitle("Bearing " + north.text(magnetic: line.magnetic))
             if !isLuminanceReduced {
                 CompassView(
-                    arrow: deviation ?? line.bearing,
-                    north: -(location.heading ?? 0),
+                    arrow: deviation ?? north.shown(magnetic: line.magnetic),
+                    north: -(shownHeading ?? 0),
                     marker: .arrow(onCourse: deviation != nil && hold.isOn)
                 )
                 .frame(maxHeight: .infinity)
@@ -181,7 +188,7 @@ struct NavigateView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             if let offset {
-                Text(offsetText(offset))
+                Text(units.offset(offset))
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -193,16 +200,11 @@ struct NavigateView: View {
         }
     }
 
-    /// "14 m left · 220 m along"
-    private func offsetText(_ offset: (across: Double, along: Double)) -> String {
-        let side = abs(offset.across) < 0.5 ? "on line" : units.format(meters: abs(offset.across)) + (offset.across > 0 ? " right" : " left")
-        let progress = offset.along < 0 ? units.format(meters: -offset.along) + " behind" : units.format(meters: offset.along) + " along"
-        return side + " · " + progress
-    }
-
+    /// Taps only while the screen is up, so a swinging arm with the wrist down stays quiet.
     private func cueDrift() {
-        guard case .bearing(let line) = navigator.goal, let heading = location.heading else { return }
-        switch hold.update(deviation: line.bearing - heading) {
+        guard scenePhase == .active, !isLuminanceReduced,
+              case .bearing(let line) = navigator.goal, let heading = location.magneticHeading else { return }
+        switch hold.update(deviation: line.magnetic - heading) {
         case .onBearing: Haptics.play(.success)
         case .turnLeft: Haptics.play(.navigationLeftTurn)
         case .turnRight: Haptics.play(.navigationRightTurn)

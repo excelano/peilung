@@ -12,11 +12,15 @@ import Observation
 final class LocationModel: NSObject, CLLocationManagerDelegate {
     /// A fix older than this is shown as stale.
     static let freshness: TimeInterval = 5
+    /// The same for the dimmed always-on display, which redraws about once a minute.
+    static let dimmedFreshness: TimeInterval = 90
+    static let declinationKey = "declination"
 
     private(set) var location: CLLocation?
-    /// Degrees clockwise from true north, or from magnetic north when the true heading is unknown.
-    private(set) var heading: Double?
-    /// True minus magnetic north, known once the compass and a fix agree.
+    /// Degrees clockwise from magnetic north, which the compass reads with or without a fix.
+    private(set) var magneticHeading: Double?
+    /// True minus magnetic north, learned once the compass has a fix and remembered,
+    /// since it changes little over hundreds of kilometers.
     private(set) var declination: Double?
     /// The compass's own error estimate, in degrees.
     private(set) var headingAccuracy: Double?
@@ -24,9 +28,12 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     private(set) var errorText: String?
 
     @ObservationIgnored private let manager = CLLocationManager()
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isSimulated = false
 
-    override init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        declination = defaults.object(forKey: Self.declinationKey) as? Double
         super.init()
         status = manager.authorizationStatus
         manager.delegate = self
@@ -38,16 +45,16 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
 
     var headingAvailable: Bool { CLLocationManager.headingAvailable() }
 
-    /// The current fix when it is no older than `freshness`.
-    func freshLocation(at now: Date = .now) -> CLLocation? {
-        guard let location, Self.isFresh(location.timestamp, at: now) else { return nil }
+    /// The current fix when it is fresh enough to act on.
+    func freshLocation(at now: Date = .now, dimmed: Bool = false) -> CLLocation? {
+        guard let location, Self.isFresh(location.timestamp, at: now, dimmed: dimmed) else { return nil }
         return location
     }
 
     var coordinate: Coordinate? { location.map { Coordinate($0.coordinate) } }
 
-    static func isFresh(_ timestamp: Date, at now: Date) -> Bool {
-        now.timeIntervalSince(timestamp) <= freshness
+    static func isFresh(_ timestamp: Date, at now: Date, dimmed: Bool = false) -> Bool {
+        now.timeIntervalSince(timestamp) <= (dimmed ? dimmedFreshness : freshness)
     }
 
     func start() {
@@ -72,17 +79,42 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     func stopHeading() {
         guard !isSimulated else { return }
         manager.stopUpdatingHeading()
-        heading = nil
+        magneticHeading = nil
         headingAccuracy = nil
+    }
+
+    /// A compass reading. A true heading below zero means the compass has no fix yet.
+    func receiveHeading(magnetic: Double, true trueHeading: Double, accuracy: Double) {
+        guard accuracy >= 0 else { return }
+        magneticHeading = magnetic
+        headingAccuracy = accuracy
+        guard trueHeading >= 0 else { return }
+        let learned = Compass.signed(trueHeading - magnetic)
+        declination = learned
+        let saved = defaults.object(forKey: Self.declinationKey) as? Double
+        if saved.map({ abs($0 - learned) >= 0.1 }) ?? true {
+            defaults.set(learned, forKey: Self.declinationKey)
+        }
+    }
+
+    /// Core Location keeps trying after a passing failure, and a refusal shows through
+    /// `status`, so only lasting failures are shown.
+    func receiveError(_ error: Error) {
+        switch (error as? CLError)?.code {
+        case .locationUnknown, .headingFailure, .denied:
+            return
+        default:
+            errorText = "Location is unavailable right now."
+        }
     }
 
     #if DEBUG
     /// Replaces Core Location with a fixed fix and compass, for screenshots.
-    func simulate(_ location: CLLocation, heading: Double, declination: Double, accuracy: Double) {
+    func simulate(_ location: CLLocation, magneticHeading: Double, declination: Double, accuracy: Double) {
         isSimulated = true
         status = .authorizedWhenInUse
         self.location = location
-        self.heading = heading
+        self.magneticHeading = magneticHeading
         self.declination = declination
         headingAccuracy = accuracy
     }
@@ -107,22 +139,17 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        let magnetic = newHeading.magneticHeading
+        let trueHeading = newHeading.trueHeading
         let accuracy = newHeading.headingAccuracy
-        guard accuracy >= 0 else { return }
-        let hasTrue = newHeading.trueHeading >= 0
-        let degrees = hasTrue ? newHeading.trueHeading : newHeading.magneticHeading
-        let offset = Compass.signed(newHeading.trueHeading - newHeading.magneticHeading)
         MainActor.assumeIsolated {
-            heading = degrees
-            headingAccuracy = accuracy
-            if hasTrue { declination = offset }
+            receiveHeading(magnetic: magnetic, true: trueHeading, accuracy: accuracy)
         }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        let text = error.localizedDescription
         MainActor.assumeIsolated {
-            errorText = text
+            receiveError(error)
         }
     }
 }

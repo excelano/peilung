@@ -13,75 +13,70 @@ struct BearingEntryView: View {
 
     let onFollow: (BearingLine) -> Void
 
-    /// The bearing as shown, once locked or dialed; nil while following the compass.
+    /// The magnetic bearing once locked or dialed; nil while following the compass.
     @State private var fixed: Double?
     @State private var crown = 0.0
     @FocusState private var isFocused: Bool
 
     private var north: North { North(reference, declination: location.declination) }
 
-    private var shown: Double? {
-        fixed ?? location.heading.map(north.shown)
-    }
+    private var magnetic: Double? { fixed ?? location.magneticHeading }
 
     var body: some View {
         VStack(spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(shown.map(North.degrees) ?? "---°")
+                Text(magnetic.map { North.degrees(north.shown(magnetic: $0)) } ?? "---°")
                     .font(.system(size: 44, weight: .semibold, design: .rounded).monospacedDigit())
-                Text(north.suffix)
+                Text(north.magneticSuffix)
                     .font(.headline)
                     .foregroundStyle(.secondary)
             }
             .foregroundStyle(fixed == nil ? Color.accentColor : .primary)
             .crownInput($crown, focus: $isFocused)
-            Text(hint)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
             if fixed == nil, let warning = CompassWarning.text(location.headingAccuracy) {
-                Text(warning).font(.footnote).foregroundStyle(.orange).multilineTextAlignment(.center)
+                Text(warning)
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(hint)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
-            if fixed == nil && location.heading != nil {
+            if fixed == nil && location.magneticHeading != nil {
                 Button("Lock") {
-                    fixed = shown
+                    fixed = location.magneticHeading
                     Haptics.play(.click)
                 }
                 .tint(.accentColor)
             } else {
                 Button("Follow") { follow() }
                     .tint(.green)
-                    .disabled(shown == nil)
+                    .disabled(magnetic == nil)
             }
         }
         .onChange(of: crown) { old, new in
             let steps = Int(new.rounded()) - Int(old.rounded())
-            if steps != 0 { fixed = Compass.normalized((shown ?? 0).rounded() + Double(steps)) }
+            guard steps != 0 else { return }
+            let shown = magnetic.map { north.shown(magnetic: $0) } ?? 0
+            fixed = north.magnetic(shown: shown.rounded() + Double(steps))
         }
     }
 
     private var hint: String {
         if fixed != nil { return "Turn the crown to adjust." }
-        if location.heading != nil { return "Point 12 o'clock at the landmark, or turn the crown." }
+        if location.magneticHeading != nil { return "Point 12 o'clock at the landmark, or turn the crown." }
         return "Turn the crown to set a bearing."
     }
 
     private func follow() {
-        guard let shown else { return }
+        guard let magnetic else { return }
         let origin = location.freshLocation().map { Coordinate($0.coordinate) }
-        onFollow(BearingLine(bearing: north.trueBearing(shown), origin: origin))
+        onFollow(BearingLine(magnetic: magnetic, origin: origin))
         Haptics.play(.start)
-    }
-}
-
-enum CompassWarning {
-    /// Above this the compass is too rough to follow a bearing by.
-    static let accuracyLimit = 20.0
-
-    static func text(_ accuracy: Double?) -> String? {
-        guard let accuracy, accuracy > accuracyLimit else { return nil }
-        return "Compass ±\(Int(accuracy.rounded()))°. Move the watch in a figure 8 to calibrate."
     }
 }

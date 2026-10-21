@@ -26,6 +26,16 @@ final class OdometerModel {
     var isAvailable: Bool { pedometer.isAvailable }
     var isDenied: Bool { pedometer.isDenied }
 
+    /// Why the reading can't be trusted or taken, if it can't.
+    func message(at now: Date) -> String? {
+        if !isAvailable { return "This watch can't measure walking distance." }
+        if isDenied { return "Allow Motion & Fitness in Settings > Privacy." }
+        if state.phase == .running && state.exceedsHistory(at: now) {
+            return "Started over 7 days ago; the watch keeps only 7 days of steps."
+        }
+        return errorText
+    }
+
     var distance: Double? {
         state.phase == .stopped ? state.finalDistance : liveDistance
     }

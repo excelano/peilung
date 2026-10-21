@@ -6,18 +6,18 @@ import Foundation
 
 /// A bearing to follow, and where it was taken when a fix was available.
 struct BearingLine: Codable, Equatable, Sendable {
-    /// Degrees clockwise from true north.
-    var bearing: Double
+    /// Degrees clockwise from magnetic north, as the compass that follows it reads.
+    var magnetic: Double
     var origin: Coordinate?
 
     /// Meters to the right of the line (negative: left) and along it from the origin
-    /// (negative: behind it). Flat-earth geometry, which is exact enough over the few
-    /// kilometers a bearing is walked.
-    func offset(of point: Coordinate) -> (across: Double, along: Double)? {
-        guard let origin else { return nil }
+    /// (negative: behind it), once the declination turns the bearing true. Flat-earth
+    /// geometry, which is exact enough over the few kilometers a bearing is walked.
+    func offset(of point: Coordinate, declination: Double?) -> (across: Double, along: Double)? {
+        guard let origin, let declination else { return nil }
         let distance = origin.distance(to: point)
         guard distance > 0 else { return (0, 0) }
-        let angle = (origin.bearing(to: point) - bearing) * .pi / 180
+        let angle = (origin.bearing(to: point) - magnetic - declination) * .pi / 180
         return (distance * sin(angle), distance * cos(angle))
     }
 }

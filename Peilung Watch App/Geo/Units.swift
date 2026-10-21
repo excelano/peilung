@@ -40,6 +40,17 @@ enum Units: String, CaseIterable, Identifiable {
         let digits = value < 9.995 ? 2 : value < 99.95 ? 1 : 0
         return String(format: "%.\(digits)f", value)
     }
+
+    /// A position against a bearing line: "14 m left · 220 m along".
+    func offset(_ offset: (across: Double, along: Double)) -> String {
+        let side = abs(offset.across) < 0.5
+            ? "on line"
+            : format(meters: abs(offset.across)) + (offset.across > 0 ? " right" : " left")
+        let progress = offset.along < 0
+            ? format(meters: -offset.along) + " behind"
+            : format(meters: offset.along) + " along"
+        return side + " · " + progress
+    }
 }
 
 enum Elapsed {
@@ -48,5 +59,13 @@ enum Elapsed {
         let seconds = max(0, Int(interval))
         let h = seconds / 3600, m = seconds / 60 % 60, s = seconds % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+    }
+
+    /// "8 s old", "3 min old", "2 h old"
+    static func age(_ interval: TimeInterval) -> String {
+        let seconds = max(0, Int(interval))
+        if seconds < 60 { return "\(seconds) s old" }
+        if seconds < 3600 { return "\(seconds / 60) min old" }
+        return "\(seconds / 3600) h old"
     }
 }

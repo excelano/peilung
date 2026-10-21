@@ -86,6 +86,11 @@ final class FakePedometer: Pedometer {
     var isDenied = false
     var handler: (@MainActor (Result<Double, Error>) -> Void)?
     var queried: Double = 0
+    var queryError: Error?
+    /// When set, queries wait until the test resumes `pending`.
+    var holdsQueries = false
+    var pending: CheckedContinuation<Double, Error>?
+    private(set) var queries = 0
 
     func startUpdates(from start: Date, handler: @escaping @MainActor (Result<Double, Error>) -> Void) {
         self.handler = handler
@@ -96,7 +101,10 @@ final class FakePedometer: Pedometer {
     }
 
     func distance(from start: Date, to end: Date) async throws -> Double {
-        queried
+        queries += 1
+        if let queryError { throw queryError }
+        guard holdsQueries else { return queried }
+        return try await withCheckedThrowingContinuation { pending = $0 }
     }
 }
 
@@ -134,6 +142,115 @@ struct OdometerModelTests {
         #expect(model.state.phase == .idle)
         #expect(model.distance == nil)
         #expect(OdometerModel(pedometer: pedometer, store: Store(url: url)).state.phase == .idle)
+    }
+
+    @Test func updatesFollowThePage() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.start(from: nil)
+        #expect(pedometer.handler == nil)
+        model.watch()
+        #expect(pedometer.handler != nil)
+        model.unwatch()
+        #expect(pedometer.handler == nil)
+    }
+
+    @Test func liveErrorShowsAndClears() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.watch()
+        model.start(from: nil)
+        pedometer.handler?(.failure(CocoaError(.featureUnsupported)))
+        #expect(model.errorText != nil)
+        pedometer.handler?(.success(10))
+        #expect(model.errorText == nil)
+        #expect(model.distance == 10)
+    }
+
+    @Test func lateResultAfterResetIsDropped() async {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        pedometer.holdsQueries = true
+        model.watch()
+        model.start(from: nil)
+        pedometer.handler?(.success(40))
+        model.stop()
+        await waitUntil { pedometer.pending != nil }
+        model.reset()
+        pedometer.pending?.resume(returning: 999)
+        await Task.yield()
+        await Task.yield()
+        #expect(model.state.phase == .idle)
+        #expect(model.distance == nil)
+    }
+
+    @Test func failedFinalQueryKeepsLiveFigureAndRetriesOnWatch() async {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.watch()
+        model.start(from: nil)
+        pedometer.handler?(.success(40))
+        pedometer.queryError = CocoaError(.featureUnsupported)
+        model.stop()
+        await waitUntil { model.errorText != nil }
+        #expect(model.distance == 40)
+
+        // The live figure was saved, so a reopened model has a reading and needs no retry.
+        pedometer.queryError = nil
+        pedometer.queried = 42
+        let reopened = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        let before = pedometer.queries
+        reopened.watch()
+        #expect(reopened.distance == 40)
+        #expect(pedometer.queries == before)
+    }
+
+    @Test func stoppedReadingWithoutDistanceIsQueriedOnWatch() async {
+        var state = OdometerState()
+        let start = Date.now.addingTimeInterval(-600)
+        state.start(at: start, from: nil)
+        state.stop(at: start.addingTimeInterval(300))
+        Store<OdometerState>(url: url).save(state)
+        pedometer.queried = 380
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        #expect(model.distance == nil)
+        model.watch()
+        await waitUntil { model.distance != nil }
+        #expect(model.distance == 380)
+    }
+
+    @Test func messagesInOrderOfImportance() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        #expect(model.message(at: .now) == nil)
+        model.watch()
+        model.start(from: nil)
+        pedometer.handler?(.failure(CocoaError(.featureUnsupported)))
+        #expect(model.message(at: .now) == model.errorText)
+        #expect(model.message(at: .now.addingTimeInterval(8 * 86_400))?.hasPrefix("Started over 7 days ago") == true)
+        pedometer.isDenied = true
+        #expect(model.message(at: .now) == "Allow Motion & Fitness in Settings > Privacy.")
+        pedometer.isAvailable = false
+        #expect(model.message(at: .now) == "This watch can't measure walking distance.")
+    }
+
+    @Test func stopWhenIdleDoesNothing() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.stop()
+        #expect(model.state.phase == .idle)
+        #expect(pedometer.queries == 0)
+    }
+
+    @Test func startFixIsSavedOnlyWhenTaken() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.start(from: nil)
+        let fix = Coordinate(latitude: 29.75, longitude: -95.37)
+        model.offerStartFix(fix)
+        #expect(model.state.startCoordinate == fix)
+        #expect(OdometerModel(pedometer: pedometer, store: Store(url: url)).state.startCoordinate == fix)
+    }
+}
+
+/// Yields until `condition` holds, for work a model starts in its own task.
+@MainActor
+func waitUntil(_ condition: () -> Bool) async {
+    for _ in 0..<1000 where !condition() {
+        await Task.yield()
     }
 }
 

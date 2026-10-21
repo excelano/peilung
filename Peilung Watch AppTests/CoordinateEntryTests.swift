@@ -59,7 +59,10 @@ struct CoordinateEntryTests {
 
     @Test func polesAndAntimeridianClampIntoEditableRange() {
         let entry = CoordinateEntry(Coordinate(latitude: 90, longitude: -180))
-        #expect(entry.text(.latDegrees) == "89")
-        #expect(entry.text(.lonDegrees) == "179")
+        #expect(entry.coordinate.latitudeText == "N 89° 59.999")
+        #expect(entry.coordinate.longitudeText == "W 179° 59.999")
+        let near = CoordinateEntry(Coordinate(latitude: -89.9999999, longitude: 179.99999999))
+        #expect(near.coordinate.latitudeText == "S 89° 59.999")
+        #expect(near.coordinate.longitudeText == "E 179° 59.999")
     }
 }

@@ -12,24 +12,42 @@ struct HereView: View {
     @State private var savedName: String?
 
     var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            content(at: context.date)
+        }
+        .navigationTitle("Here")
+    }
+
+    /// An old fix stays on screen, dimmed and dated, until a fresh one arrives;
+    /// only a fresh one can be marked.
+    @ViewBuilder
+    private func content(at now: Date) -> some View {
         VStack(spacing: 6) {
             if let fix = location.location {
+                let isFresh = LocationModel.isFresh(fix.timestamp, at: now, dimmed: isLuminanceReduced)
                 VStack(alignment: .leading, spacing: 6) {
                     CoordinateText(coordinate: Coordinate(fix.coordinate))
-                    Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
-                        .font(.footnote)
-                        .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
+                        .foregroundStyle(isFresh ? .primary : .secondary)
+                    if isFresh {
+                        Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
+                            .font(.footnote)
+                            .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
+                    } else {
+                        Text("Updating · " + Elapsed.age(now.timeIntervalSince(fix.timestamp)))
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if !isLuminanceReduced {
                     Spacer(minLength: 0)
                     markButton(fix)
+                        .disabled(!isFresh)
                 }
             } else {
                 LocationStatusView()
             }
         }
-        .navigationTitle("Here")
     }
 
     private func markButton(_ fix: CLLocation) -> some View {

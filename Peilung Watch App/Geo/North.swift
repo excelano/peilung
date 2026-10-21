@@ -21,31 +21,50 @@ enum NorthReference: String, CaseIterable, Identifiable {
     }
 }
 
-/// Converts between the true bearings used internally and the bearings shown.
-/// Magnetic needs the declination from the compass; until it is known, bearings
-/// are shown as true and labelled so.
+/// Shows bearings against the chosen north. The compass reads magnetic and GPS
+/// bearings are true; the declination (true minus magnetic) converts between them.
+/// Until it is known, a bearing is shown in its own north and labelled so.
 struct North: Equatable {
-    let isMagnetic: Bool
-    let declination: Double
+    let reference: NorthReference
+    let declination: Double?
 
     init(_ reference: NorthReference, declination: Double?) {
-        isMagnetic = reference == .magnetic && declination != nil
-        self.declination = isMagnetic ? declination ?? 0 : 0
+        self.reference = reference
+        self.declination = declination
     }
 
-    var suffix: String { isMagnetic ? "M" : "T" }
+    /// Whether a magnetic reading is shown as true.
+    private var showsMagneticAsTrue: Bool { reference == .true && declination != nil }
 
-    func shown(_ trueBearing: Double) -> Double {
-        Compass.normalized(trueBearing - declination)
+    /// "M" or "T", for a magnetic reading as shown.
+    var magneticSuffix: String { showsMagneticAsTrue ? "T" : "M" }
+
+    /// A magnetic reading as shown.
+    func shown(magnetic: Double) -> Double {
+        Compass.normalized(magnetic + (showsMagneticAsTrue ? declination ?? 0 : 0))
     }
 
-    func trueBearing(_ shownBearing: Double) -> Double {
-        Compass.normalized(shownBearing + declination)
+    /// A bearing entered as shown, back to magnetic.
+    func magnetic(shown: Double) -> Double {
+        Compass.normalized(shown - (showsMagneticAsTrue ? declination ?? 0 : 0))
+    }
+
+    /// A magnetic reading as true, once the declination is known.
+    func trueBearing(magnetic: Double) -> Double? {
+        declination.map { Compass.normalized(magnetic + $0) }
     }
 
     /// "054° M"
-    func text(_ trueBearing: Double) -> String {
-        Self.degrees(shown(trueBearing)) + " " + suffix
+    func text(magnetic: Double) -> String {
+        Self.degrees(shown(magnetic: magnetic)) + " " + magneticSuffix
+    }
+
+    /// A true bearing from GPS, "054° M" once the declination is known when magnetic is chosen.
+    func text(true value: Double) -> String {
+        if reference == .magnetic, let declination {
+            return Self.degrees(Compass.normalized(value - declination)) + " M"
+        }
+        return Self.degrees(value) + " T"
     }
 
     /// "054°", rounded to a whole degree with 360 shown as 000.

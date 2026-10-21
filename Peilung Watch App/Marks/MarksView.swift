@@ -13,14 +13,25 @@ struct MarksView: View {
     @State private var renaming: Mark?
 
     var body: some View {
-        List {
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            list(at: context.date)
+        }
+        .navigationTitle("Marks")
+        .sheet(item: $renaming) { mark in
+            RenameView(name: mark.name) { marks.rename(mark.id, to: $0) }
+        }
+    }
+
+    private func list(at now: Date) -> some View {
+        let here = location.freshLocation(at: now).map { Coordinate($0.coordinate) }
+        return List {
             if marks.marks.isEmpty {
                 Text("No marks yet. Save one from the Here page.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             ForEach(marks.marks) { mark in
-                Button { navigator.navigate(to: mark.target) } label: { row(mark) }
+                Button { navigator.navigate(to: mark.target) } label: { row(mark, here: here) }
                     .swipeActions {
                         Button("Delete", systemImage: "trash", role: .destructive) { marks.delete(mark.id) }
                         Button("Rename", systemImage: "pencil") { renaming = mark }
@@ -36,13 +47,9 @@ struct MarksView: View {
                 }
             }
         }
-        .navigationTitle("Marks")
-        .sheet(item: $renaming) { mark in
-            RenameView(name: mark.name) { marks.rename(mark.id, to: $0) }
-        }
     }
 
-    private func row(_ mark: Mark) -> some View {
+    private func row(_ mark: Mark, here: Coordinate?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(mark.name).font(.headline).lineLimit(1)
             Group {
@@ -53,7 +60,7 @@ struct MarksView: View {
             HStack {
                 Text(mark.date, format: .relative(presentation: .named))
                 Spacer()
-                if let here = location.coordinate {
+                if let here {
                     Text(units.format(meters: here.distance(to: mark.coordinate)))
                 }
             }

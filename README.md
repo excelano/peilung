@@ -10,13 +10,13 @@ The app's pages scroll vertically with the Digital Crown, and it reopens on the 
 
 The button at the top left takes a bearing. Point 12 o'clock at a landmark and press Lock, or turn the Digital Crown to dial one read off a map, then Follow it. The arrow shows the bearing relative to where the watch points; it turns green and the watch taps once when you are within a few degrees, and taps a turn cue when you drift off. When a GPS fix was available as you took the bearing, the page also shows how far you are to the left or right of the line and how far along it, which catches the sideways drift a compass alone cannot see after you step around an obstacle. A watch compass is far rougher than a baseplate compass, so the page warns when the watch reports a poor heading and asks for the figure-8 calibration motion. Tapping the goal's name at the top of the page stops navigating, for a point or a bearing, and returns to the compass.
 
-Bearings are shown against magnetic north by default, because orienteering maps are drawn to it, so a bearing measured off one can be dialed in as is. The North setting switches to true north. A bearing reads `T` instead of `M` until the compass has reported the local declination.
+Bearings are shown against magnetic north by default, because orienteering maps are drawn to it, so a bearing measured off one can be dialed in as is. The watch's compass reads magnetic north with or without GPS, so taking and following a bearing needs no fix. The North setting switches to true north, which needs the local declination: the watch learns it from its first GPS fix and remembers it, and until then readings stay magnetic and are labelled `M`. GPS bearings to a point are true, and show as `T` while the declination is unknown.
 
 GPS-based navigation is not allowed during most orienteering competitions; check an event's rules before using Peilung in one.
 
 **Odometer** is a stopwatch for distance. Press Start where you are, walk, and come back to it whenever you like to see how far you have gone and for how long. The distance comes from the watch's own step count, which it records whether or not Peilung is open, so the odometer costs no battery between glances and survives the app being closed. When a GPS fix was available at Start, the page also shows the straight-line distance back to where you started, and tapping that line navigates there.
 
-**Here** shows your position in the degrees-and-decimal-minutes form geocaching uses (`N 29° 45.123  W 095° 22.456`), with its accuracy, and a Mark button that saves it.
+**Here** shows your position in the degrees-and-decimal-minutes form geocaching uses (`N 29° 45.123  W 095° 22.456`), with its accuracy, and a Mark button that saves it. A position the watch remembered from earlier is shown dimmed with its age until a fresh fix arrives, and only a fresh one can be marked.
 
 **Marks** lists saved points with their age and distance from here. Tap one to navigate to it, swipe to rename or delete it. The units and North settings live at the bottom of this list.
 

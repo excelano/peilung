@@ -47,8 +47,13 @@ struct OdometerView: View {
                     .foregroundStyle(state.phase == .stopped ? .secondary : .primary)
                 if !isLuminanceReduced { backToStart }
             }
-            if let message = message(at: now) {
-                Text(message).font(.footnote).foregroundStyle(.orange).multilineTextAlignment(.center)
+            if let message = odometer.message(at: now) {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7)
             }
         }
     }
@@ -90,14 +95,5 @@ struct OdometerView: View {
                 Haptics.play(.click)
             }
         }
-    }
-
-    private func message(at now: Date) -> String? {
-        if !odometer.isAvailable { return "This watch can't measure walking distance." }
-        if odometer.isDenied { return "Allow Motion & Fitness in Settings > Privacy." }
-        if odometer.state.phase == .running && odometer.state.exceedsHistory(at: now) {
-            return "Started over 7 days ago; the watch keeps only 7 days of steps."
-        }
-        return odometer.errorText
     }
 }

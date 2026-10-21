@@ -21,8 +21,16 @@ struct CoordinateEntry: Equatable {
     init(_ coordinate: Coordinate) {
         latitude = DDM(coordinate.latitude, isLatitude: true)
         longitude = DDM(coordinate.longitude, isLatitude: false)
-        latitude.degrees = min(latitude.degrees, 89)
-        longitude.degrees = min(longitude.degrees, 179)
+        Self.clamp(&latitude, to: 89)
+        Self.clamp(&longitude, to: 179)
+    }
+
+    /// A pole or the antimeridian becomes the nearest value the fields can hold.
+    private static func clamp(_ axis: inout DDM, to degrees: Int) {
+        guard axis.degrees > degrees else { return }
+        axis.degrees = degrees
+        axis.minutes = 59
+        axis.thousandths = 999
     }
 
     var coordinate: Coordinate {

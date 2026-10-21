@@ -3,6 +3,9 @@
 // Built with AI assistance (Claude, Anthropic)
 
 import Foundation
+import os
+
+private let log = Logger(subsystem: "com.excelano.peilung", category: "store")
 
 /// One Codable value kept as a JSON file in Application Support.
 struct Store<Value: Codable> {
@@ -31,7 +34,7 @@ struct Store<Value: Codable> {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try JSONEncoder().encode(value).write(to: url, options: .atomic)
         } catch {
-            assertionFailure("Saving \(url.lastPathComponent) failed: \(error)")
+            log.error("Saving \(url.lastPathComponent, privacy: .public) failed: \(error, privacy: .public)")
         }
     }
 }

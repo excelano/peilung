@@ -27,11 +27,14 @@ enum Compass {
         let value = degrees.truncatingRemainder(dividingBy: 360)
         return value < 0 ? value + 360 : value
     }
+}
 
-    /// "N", "NE", … for a bearing in degrees.
-    static func point(_ degrees: Double) -> String {
-        let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-        let index = Int(((degrees + 22.5) / 45).rounded(.down))
-        return points[(index % 8 + 8) % 8]
+enum CompassWarning {
+    /// Above this the compass is too rough to follow a bearing by.
+    static let accuracyLimit = 20.0
+
+    static func text(_ accuracy: Double?) -> String? {
+        guard let accuracy, accuracy > accuracyLimit else { return nil }
+        return "Compass ±\(Int(accuracy.rounded()))°. Move the watch in a figure 8 to calibrate."
     }
 }

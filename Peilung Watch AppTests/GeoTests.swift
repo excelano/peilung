@@ -54,15 +54,6 @@ struct CompassTests {
         #expect(Compass.unwrapped(90, from: 720) == 810)
         #expect(Compass.unwrapped(-90, from: 0) == -90)
     }
-
-    @Test func compassPoints() {
-        #expect(Compass.point(0) == "N")
-        #expect(Compass.point(22.4) == "N")
-        #expect(Compass.point(22.5) == "NE")
-        #expect(Compass.point(180) == "S")
-        #expect(Compass.point(337.6) == "N")
-        #expect(Compass.point(-45) == "NW")
-    }
 }
 
 struct UnitsTests {
@@ -88,6 +79,35 @@ struct UnitsTests {
         #expect(Elapsed.format(5025) == "1:23:45")
         #expect(Elapsed.format(-3) == "0:00")
     }
+
+    @Test func offsetFromALine() {
+        #expect(Units.metric.offset((across: -14.2, along: 220)) == "14 m left · 220 m along")
+        #expect(Units.metric.offset((across: 3, along: -40)) == "3 m right · 40 m behind")
+        #expect(Units.metric.offset((across: 0.4, along: 0)) == "on line · 0 m along")
+        #expect(Units.imperial.offset((across: 10, along: 1609.344)) == "33 ft right · 1.00 mi along")
+    }
+
+    @Test func labels() {
+        #expect(Units.metric.label != Units.imperial.label)
+        #expect(NorthReference.magnetic.label == "Magnetic")
+        #expect(NorthReference.true.label == "True")
+    }
+
+    @Test func age() {
+        #expect(Elapsed.age(-1) == "0 s old")
+        #expect(Elapsed.age(59.9) == "59 s old")
+        #expect(Elapsed.age(60) == "1 min old")
+        #expect(Elapsed.age(3599) == "59 min old")
+        #expect(Elapsed.age(7300) == "2 h old")
+    }
+}
+
+struct CompassWarningTests {
+    @Test func warnsOnlyAboveTheLimit() {
+        #expect(CompassWarning.text(nil) == nil)
+        #expect(CompassWarning.text(20) == nil)
+        #expect(CompassWarning.text(24.6) == "Compass ±25°. Move the watch in a figure 8 to calibrate.")
+    }
 }
 
 struct FreshnessTests {
@@ -95,5 +115,11 @@ struct FreshnessTests {
         let now = Date.now
         #expect(LocationModel.isFresh(now.addingTimeInterval(-5), at: now))
         #expect(!LocationModel.isFresh(now.addingTimeInterval(-5.1), at: now))
+    }
+
+    @MainActor @Test func dimmedDisplayAllowsAMinuteAndAHalf() {
+        let now = Date.now
+        #expect(LocationModel.isFresh(now.addingTimeInterval(-90), at: now, dimmed: true))
+        #expect(!LocationModel.isFresh(now.addingTimeInterval(-91), at: now, dimmed: true))
     }
 }

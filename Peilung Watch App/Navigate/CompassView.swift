@@ -17,6 +17,9 @@ struct CompassView: View {
     let north: Double
     let marker: Marker
 
+    /// Readings after the first turn the marks; the first places them, so opening the page does not spin it.
+    private static let turn = Animation.easeOut(duration: 0.25)
+
     @State private var shownArrow = 0.0
     @State private var shownNorth = 0.0
 
@@ -48,12 +51,12 @@ struct CompassView: View {
             .frame(width: size, height: size)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onChange(of: arrow, initial: true) {
-            guard let arrow else { return }
-            withAnimation(.easeOut(duration: 0.25)) { shownArrow = Compass.unwrapped(arrow, from: shownArrow) }
+        .onChange(of: arrow, initial: true) { old, new in
+            guard let new else { return }
+            withAnimation(old == nil || old == new ? nil : Self.turn) { shownArrow = Compass.unwrapped(new, from: shownArrow) }
         }
-        .onChange(of: north, initial: true) {
-            withAnimation(.easeOut(duration: 0.25)) { shownNorth = Compass.unwrapped(north, from: shownNorth) }
+        .onChange(of: north, initial: true) { old, new in
+            withAnimation(old == new ? nil : Self.turn) { shownNorth = Compass.unwrapped(new, from: shownNorth) }
         }
         .accessibilityHidden(true)
     }

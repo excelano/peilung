@@ -7,30 +7,48 @@ import Testing
 @testable import Peilung_Watch_App
 
 struct NorthTests {
-    @Test func magneticSubtractsEastDeclination() {
+    @Test func magneticShowsReadingsAsTheyAre() {
         let north = North(.magnetic, declination: 2.5)
-        #expect(north.isMagnetic)
-        #expect(north.shown(74) == 71.5)
-        #expect(north.text(74) == "072° M")
-        #expect(north.trueBearing(71.5) == 74)
+        #expect(north.magneticSuffix == "M")
+        #expect(north.text(magnetic: 71.5) == "072° M")
+        #expect(north.magnetic(shown: 72) == 72)
     }
 
-    @Test func westDeclinationWrapsPastNorth() {
-        let north = North(.magnetic, declination: -12)
-        #expect(north.text(355) == "007° M")
-        #expect(north.trueBearing(5) == 353)
-    }
-
-    @Test func trueIgnoresDeclination() {
-        let north = North(.true, declination: 9)
-        #expect(!north.isMagnetic)
-        #expect(north.text(74) == "074° T")
-    }
-
-    @Test func magneticFallsBackToTrueUntilDeclinationIsKnown() {
+    @Test func magneticNeedsNoDeclinationForCompassReadings() {
         let north = North(.magnetic, declination: nil)
-        #expect(!north.isMagnetic)
-        #expect(north.text(74) == "074° T")
+        #expect(north.text(magnetic: 71.5) == "072° M")
+        #expect(north.trueBearing(magnetic: 71.5) == nil)
+    }
+
+    @Test func gpsBearingsShowMagneticOnceDeclinationIsKnown() {
+        #expect(North(.magnetic, declination: 2.5).text(true: 74) == "072° M")
+        #expect(North(.magnetic, declination: -12).text(true: 5) == "017° M")
+        #expect(North(.magnetic, declination: nil).text(true: 74) == "074° T")
+    }
+
+    @Test func trueConvertsReadingsOnceDeclinationIsKnown() {
+        let north = North(.true, declination: -12)
+        #expect(north.magneticSuffix == "T")
+        #expect(north.text(magnetic: 7) == "355° T")
+        #expect(north.magnetic(shown: 355) == 7)
+        #expect(north.trueBearing(magnetic: 7) == 355)
+        #expect(north.text(true: 74) == "074° T")
+    }
+
+    @Test func trueFallsBackToMagneticUntilDeclinationIsKnown() {
+        let north = North(.true, declination: nil)
+        #expect(north.magneticSuffix == "M")
+        #expect(north.text(magnetic: 74) == "074° M")
+        #expect(north.magnetic(shown: 74) == 74)
+    }
+
+    @Test func shownAndEnteredRoundTrip() {
+        for reference in NorthReference.allCases {
+            let north = North(reference, declination: 9.3)
+            for magnetic in stride(from: 0.0, to: 360, by: 17.5) {
+                #expect(abs(north.magnetic(shown: north.shown(magnetic: magnetic)) - magnetic) < 1e-9)
+            }
+        }
     }
 
     @Test func degreesRoundToThreeDigits() {
@@ -67,46 +85,60 @@ struct BearingLineTests {
     }
 
     @Test func eastwardLine() throws {
-        let line = BearingLine(bearing: 90, origin: origin)
-        let ahead = try #require(line.offset(of: point(north: 0, east: 300)))
+        let line = BearingLine(magnetic: 90, origin: origin)
+        let ahead = try #require(line.offset(of: point(north: 0, east: 300), declination: 0))
         #expect(abs(ahead.along - 300) < 3)
         #expect(abs(ahead.across) < 1)
 
-        let left = try #require(line.offset(of: point(north: 20, east: 200)))
+        let left = try #require(line.offset(of: point(north: 20, east: 200), declination: 0))
         #expect(abs(left.across - -20) < 1)
         #expect(abs(left.along - 200) < 3)
 
-        let right = try #require(line.offset(of: point(north: -20, east: 200)))
+        let right = try #require(line.offset(of: point(north: -20, east: 200), declination: 0))
         #expect(abs(right.across - 20) < 1)
     }
 
     @Test func pointBehindTheOrigin() throws {
-        let line = BearingLine(bearing: 0, origin: origin)
-        let behind = try #require(line.offset(of: point(north: -50, east: 0)))
+        let line = BearingLine(magnetic: 0, origin: origin)
+        let behind = try #require(line.offset(of: point(north: -50, east: 0), declination: 0))
         #expect(abs(behind.along - -50) < 1)
     }
 
     @Test func diagonalLine() throws {
         // 10 m right of a 045° line, 100 m along it.
-        let line = BearingLine(bearing: 45, origin: origin)
+        let line = BearingLine(magnetic: 45, origin: origin)
         let s = sqrt(0.5)
-        let offset = try #require(line.offset(of: point(north: 100 * s - 10 * s, east: 100 * s + 10 * s)))
+        let offset = try #require(line.offset(of: point(north: 100 * s - 10 * s, east: 100 * s + 10 * s), declination: 0))
         #expect(abs(offset.across - 10) < 1)
         #expect(abs(offset.along - 100) < 1.5)
     }
 
     @Test func noOriginNoOffset() {
-        #expect(BearingLine(bearing: 90, origin: nil).offset(of: origin) == nil)
+        #expect(BearingLine(magnetic: 90, origin: nil).offset(of: origin, declination: 0) == nil)
+    }
+
+    @Test func noDeclinationNoOffset() {
+        #expect(BearingLine(magnetic: 90, origin: origin).offset(of: point(north: 0, east: 100), declination: nil) == nil)
+    }
+
+    @Test func declinationTurnsTheLineTrue() throws {
+        // 080° magnetic with 10° east declination runs due east.
+        let line = BearingLine(magnetic: 80, origin: origin)
+        let offset = try #require(line.offset(of: point(north: 0, east: 300), declination: 10))
+        #expect(abs(offset.across) < 1)
+        #expect(abs(offset.along - 300) < 3)
+        let uncorrected = try #require(line.offset(of: point(north: 0, east: 300), declination: 0))
+        #expect(uncorrected.across > 50)
     }
 
     @Test func atTheOrigin() throws {
-        let offset = try #require(BearingLine(bearing: 90, origin: origin).offset(of: origin))
+        let offset = try #require(BearingLine(magnetic: 90, origin: origin).offset(of: origin, declination: 0))
         #expect(offset.across == 0 && offset.along == 0)
     }
 
     @Test func goalPersists() {
         let store = Store<Goal>(url: temporaryURL())
-        let goal = Goal.bearing(BearingLine(bearing: 123.4, origin: origin))
+        let goal = Goal.bearing(BearingLine(magnetic: 123.4, origin: origin))
         store.save(goal)
         #expect(store.load() == goal)
         let point = Goal.point(Target(name: "Car", coordinate: origin))
@@ -165,7 +197,7 @@ struct NavigatorTests {
     @Test func clearForgetsTheGoal() {
         let url = temporaryURL()
         let navigator = Navigator(store: Store(url: url), defaults: defaults)
-        navigator.follow(BearingLine(bearing: 90, origin: nil))
+        navigator.follow(BearingLine(magnetic: 90, origin: nil))
         #expect(navigator.page == .navigate)
         navigator.clear()
         #expect(navigator.goal == nil)
