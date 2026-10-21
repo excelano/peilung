@@ -20,7 +20,7 @@ struct NavigateView: View {
 
     /// How long a change in bearing must hold, with the screen up, before it taps.
     /// Raising or lowering the wrist swings the compass before the screen changes state.
-    private static let driftSettle = Duration.seconds(1)
+    private static let driftSettle = Duration.milliseconds(500)
     /// The first tap on the goal's title arms Stop for a few seconds; a second tap stops.
     @State private var isStopArmed = false
 
