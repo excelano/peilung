@@ -259,29 +259,46 @@ struct MarkStoreTests {
     let url = temporaryURL()
     let here = Coordinate(latitude: 29.75, longitude: -95.37)
 
-    @Test func namesTakeTheLowestFreeNumber() {
+    @Test func numberingCarriesOnPastTheHighest() {
         let store = MarkStore(store: Store(url: url))
         let first = store.add(here)
         let second = store.add(here)
         let third = store.add(here)
         #expect([first.name, second.name, third.name] == ["Mark 1", "Mark 2", "Mark 3"])
-        store.delete(second.id)
-        #expect(store.add(here).name == "Mark 2")
+        store.delete(first.id)
         #expect(store.add(here).name == "Mark 4")
+        store.delete(third.id)
+        #expect(store.add(here).name == "Mark 5")
     }
 
-    @Test func anEmptiedListStartsAgainAtOne() {
-        let store = MarkStore(store: Store(url: url))
-        store.delete(store.add(here).id)
-        store.delete(store.add(here).id)
-        #expect(store.add(here).name == "Mark 1")
-    }
-
-    @Test func renamedMarksFreeTheirNumber() {
+    @Test func deletingEveryNumberedMarkStartsAgainAtOne() {
         let store = MarkStore(store: Store(url: url))
         let first = store.add(here)
-        store.rename(first.id, to: "Car")
+        let second = store.add(here)
+        store.delete(first.id)
+        store.delete(second.id)
         #expect(store.add(here).name == "Mark 1")
+    }
+
+    @Test func renamingEveryNumberedMarkStartsAgainAtOne() {
+        let store = MarkStore(store: Store(url: url))
+        let first = store.add(here)
+        let second = store.add(here)
+        store.rename(first.id, to: "Car")
+        #expect(store.add(here).name == "Mark 3")
+        store.rename(second.id, to: "Trailhead")
+        store.rename(store.marks[0].id, to: "Bench")
+        #expect(store.add(here).name == "Mark 1")
+    }
+
+    @Test func onlyExactDefaultNamesCount() {
+        let store = MarkStore(store: Store(url: url))
+        let mark = store.add(here)
+        store.rename(mark.id, to: "Mark 7b")
+        #expect(store.add(here).name == "Mark 1")
+        let other = store.add(here)
+        store.rename(other.id, to: "Mark 9")
+        #expect(store.add(here).name == "Mark 10")
     }
 
     @Test func renameTrimsAndRejectsBlank() {

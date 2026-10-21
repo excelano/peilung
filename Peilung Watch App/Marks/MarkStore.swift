@@ -41,10 +41,14 @@ final class MarkStore {
         return mark
     }
 
-    /// The lowest number no current mark is named after, so an emptied list starts again at 1.
+    /// One past the highest default name still in the list, so numbering carries on
+    /// while numbered marks remain and starts again at 1 once none do.
     private var nextNumber: Int {
-        let taken = Set(contents.marks.map(\.name))
-        return (1...).first { !taken.contains("Mark \($0)") }!
+        let numbers = contents.marks.compactMap { mark -> Int? in
+            guard mark.name.hasPrefix("Mark ") else { return nil }
+            return Int(mark.name.dropFirst("Mark ".count))
+        }
+        return (numbers.max() ?? 0) + 1
     }
 
     func rename(_ id: Mark.ID, to name: String) {
