@@ -4,12 +4,18 @@
 
 import SwiftUI
 
-/// A ring with its north mark at `north` degrees and an arrow at `arrow` degrees,
+/// A ring with its north mark at `north` degrees and a marker at `arrow` degrees,
 /// both clockwise from the top of the screen. No arrow means no usable direction.
 struct CompassView: View {
+    enum Marker: Equatable {
+        case arrow(onCourse: Bool)
+        /// At the target, where direction no longer means anything.
+        case scope
+    }
+
     let arrow: Double?
     let north: Double
-    let isNear: Bool
+    let marker: Marker
 
     @State private var shownArrow = 0.0
     @State private var shownNorth = 0.0
@@ -25,15 +31,18 @@ struct CompassView: View {
                     .foregroundStyle(.red)
                     .offset(y: -size * 0.38)
                     .rotationEffect(.degrees(shownNorth))
-                if isNear {
+                switch marker {
+                case .scope:
                     Image(systemName: "scope")
                         .font(.system(size: size * 0.4))
                         .foregroundStyle(.green)
-                } else if arrow != nil {
-                    Image(systemName: "location.north.fill")
-                        .font(.system(size: size * 0.45))
-                        .foregroundStyle(.tint)
-                        .rotationEffect(.degrees(shownArrow))
+                case .arrow(let onCourse):
+                    if arrow != nil {
+                        Image(systemName: "location.north.fill")
+                            .font(.system(size: size * 0.45))
+                            .foregroundStyle(onCourse ? AnyShapeStyle(.green) : AnyShapeStyle(.tint))
+                            .rotationEffect(.degrees(shownArrow))
+                    }
                 }
             }
             .frame(width: size, height: size)

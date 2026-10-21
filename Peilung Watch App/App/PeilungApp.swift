@@ -14,15 +14,15 @@ struct PeilungApp: App {
     init() {
         let odometerStore = Store<OdometerState>(name: "odometer")
         let markStore = Store<MarkStore.Contents>(name: "marks")
-        let targetStore = Store<Target>(name: "target")
+        let goalStore = Store<Goal>(name: "goal")
         #if DEBUG
         let demoPage = Demo.page
         if demoPage != nil {
-            Demo.prepareStores(odometer: odometerStore, marks: markStore, target: targetStore)
+            Demo.prepareStores(odometer: odometerStore, marks: markStore, goal: goalStore)
         }
         #endif
         let location = LocationModel()
-        let navigator = Navigator(store: targetStore)
+        let navigator = Navigator(store: goalStore)
         _location = State(initialValue: location)
         _odometer = State(initialValue: OdometerModel(pedometer: Pedometers.make(), store: odometerStore))
         _marks = State(initialValue: MarkStore(store: markStore))

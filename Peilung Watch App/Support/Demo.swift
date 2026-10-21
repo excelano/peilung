@@ -9,27 +9,40 @@ import Foundation
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
 /// the location prompt:
 ///
-///     --demo odometer|here|navigate|marks   fixed position, a running odometer, marks and a target
-///     --entry                               also opens the target entry sheet
+///     --demo odometer|here|navigate|bearing|marks   fixed position and compass, a running
+///                                                   odometer, marks, and a point or bearing goal
+///     --entry coordinates|bearing                   also opens that entry sheet on Navigate
 enum Demo {
     static let here = Coordinate(latitude: 29.75205, longitude: -95.3742667)
 
-    static var page: Page? {
+    private static func argument(after flag: String) -> String? {
         let arguments = CommandLine.arguments
-        guard let index = arguments.firstIndex(of: "--demo"), index + 1 < arguments.count else { return nil }
-        return switch arguments[index + 1] {
+        guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
+
+    private static var scene: String? { argument(after: "--demo") }
+
+    static var page: Page? {
+        switch scene {
         case "odometer": .odometer
         case "here": .here
-        case "navigate": .navigate
+        case "navigate", "bearing": .navigate
         case "marks": .marks
         default: nil
         }
     }
 
-    static var opensEntry: Bool { CommandLine.arguments.contains("--entry") }
+    static var entry: NavigateView.Entry? {
+        switch argument(after: "--entry") {
+        case "coordinates": .coordinates
+        case "bearing": .bearing
+        default: nil
+        }
+    }
 
     /// Writes the demo's saved state; runs before the models load it.
-    static func prepareStores(odometer: Store<OdometerState>, marks: Store<MarkStore.Contents>, target: Store<Target>) {
+    static func prepareStores(odometer: Store<OdometerState>, marks: Store<MarkStore.Contents>, goal: Store<Goal>) {
         let now = Date.now
         var state = OdometerState()
         state.start(at: now.addingTimeInterval(-47 * 60), from: offset(north: -1650, east: -2400))
@@ -47,7 +60,12 @@ enum Demo {
         contents.nextNumber = 4
         marks.save(contents)
 
-        target.save(Target(name: "GC7XQ2M", coordinate: offset(north: 140, east: 190)))
+        if scene == "bearing" {
+            // Taken 220 m back along 074° true; here is now 14 m left of the line.
+            goal.save(.bearing(BearingLine(bearing: 74, origin: offset(north: -74.1, east: -207.6))))
+        } else {
+            goal.save(.point(Target(name: "GC7XQ2M", coordinate: offset(north: 140, east: 190))))
+        }
     }
 
     @MainActor
@@ -57,7 +75,7 @@ enum Demo {
             altitude: 15, horizontalAccuracy: 4, verticalAccuracy: 6,
             timestamp: .distantFuture
         )
-        location.simulate(fix, heading: 20)
+        location.simulate(fix, heading: scene == "bearing" ? 71 : 20, declination: 2, accuracy: 8)
         navigator.page = page
     }
 

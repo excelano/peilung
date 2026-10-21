@@ -9,6 +9,7 @@ struct MarksView: View {
     @Environment(LocationModel.self) private var location
     @Environment(Navigator.self) private var navigator
     @AppStorage(Units.storageKey) private var units = Units.localeDefault
+    @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
     @State private var renaming: Mark?
 
     var body: some View {
@@ -26,9 +27,12 @@ struct MarksView: View {
                             .tint(.blue)
                     }
             }
-            Section {
+            Section("Settings") {
                 Picker("Units", selection: $units) {
                     ForEach(Units.allCases) { Text($0.label).tag($0) }
+                }
+                Picker("North", selection: $reference) {
+                    ForEach(NorthReference.allCases) { Text($0.label).tag($0) }
                 }
             }
         }

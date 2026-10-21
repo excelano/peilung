@@ -14,7 +14,12 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     static let freshness: TimeInterval = 5
 
     private(set) var location: CLLocation?
+    /// Degrees clockwise from true north, or from magnetic north when the true heading is unknown.
     private(set) var heading: Double?
+    /// True minus magnetic north, known once the compass and a fix agree.
+    private(set) var declination: Double?
+    /// The compass's own error estimate, in degrees.
+    private(set) var headingAccuracy: Double?
     private(set) var status: CLAuthorizationStatus = .notDetermined
     private(set) var errorText: String?
 
@@ -68,15 +73,18 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         guard !isSimulated else { return }
         manager.stopUpdatingHeading()
         heading = nil
+        headingAccuracy = nil
     }
 
     #if DEBUG
-    /// Replaces Core Location with a fixed fix and heading, for screenshots.
-    func simulate(_ location: CLLocation, heading: Double?) {
+    /// Replaces Core Location with a fixed fix and compass, for screenshots.
+    func simulate(_ location: CLLocation, heading: Double, declination: Double, accuracy: Double) {
         isSimulated = true
         status = .authorizedWhenInUse
         self.location = location
         self.heading = heading
+        self.declination = declination
+        headingAccuracy = accuracy
     }
     #endif
 
@@ -99,10 +107,15 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        guard newHeading.headingAccuracy >= 0 else { return }
-        let degrees = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        let accuracy = newHeading.headingAccuracy
+        guard accuracy >= 0 else { return }
+        let hasTrue = newHeading.trueHeading >= 0
+        let degrees = hasTrue ? newHeading.trueHeading : newHeading.magneticHeading
+        let offset = Compass.signed(newHeading.trueHeading - newHeading.magneticHeading)
         MainActor.assumeIsolated {
             heading = degrees
+            headingAccuracy = accuracy
+            if hasTrue { declination = offset }
         }
     }
 

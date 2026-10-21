@@ -17,6 +17,17 @@ enum Compass {
         return current + delta
     }
 
+    /// The same angle in -180 ... 180, negative meaning anticlockwise.
+    static func signed(_ degrees: Double) -> Double {
+        unwrapped(degrees, from: 0)
+    }
+
+    /// The same angle in 0 ..< 360.
+    static func normalized(_ degrees: Double) -> Double {
+        let value = degrees.truncatingRemainder(dividingBy: 360)
+        return value < 0 ? value + 360 : value
+    }
+
     /// "N", "NE", … for a bearing in degrees.
     static func point(_ degrees: Double) -> String {
         let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]

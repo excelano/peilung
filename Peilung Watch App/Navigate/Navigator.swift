@@ -8,28 +8,31 @@ enum Page: Hashable {
     case odometer, here, navigate, marks
 }
 
-/// The page on screen and the target being navigated to.
+/// The page on screen and where Navigate is taking you.
 @MainActor
 @Observable
 final class Navigator {
     var page = Page.odometer
-    private(set) var target: Target?
+    private(set) var goal: Goal?
 
-    @ObservationIgnored private let store: Store<Target>
+    @ObservationIgnored private let store: Store<Goal>
 
-    init(store: Store<Target>) {
+    init(store: Store<Goal>) {
         self.store = store
-        target = store.load()
+        goal = store.load()
     }
 
     func navigate(to target: Target) {
-        self.target = target
-        store.save(target)
-        page = .navigate
+        set(.point(target))
     }
 
-    func clearTarget() {
-        target = nil
-        store.save(nil)
+    func follow(_ line: BearingLine) {
+        set(.bearing(line))
+    }
+
+    private func set(_ goal: Goal) {
+        self.goal = goal
+        store.save(goal)
+        page = .navigate
     }
 }
