@@ -57,7 +57,7 @@ struct NavigateView: View {
                 Button("Bearing", systemImage: "location.north.line") { entry = .bearing }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Coordinates", systemImage: "pencil") { entry = .coordinates }
+                Button("Coordinates", systemImage: "target") { entry = .coordinates }
             }
         }
         .sheet(item: $entry) { kind in
