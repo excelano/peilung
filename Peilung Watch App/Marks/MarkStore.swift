@@ -41,6 +41,11 @@ final class MarkStore {
         return mark
     }
 
+    /// The mark already at `coordinate`, or a new one there.
+    func mark(at coordinate: Coordinate, date: Date = .now) -> Mark {
+        marks.first { $0.coordinate == coordinate } ?? add(coordinate, at: date)
+    }
+
     /// One past the highest default name still in the list, so numbering carries on
     /// while numbered marks remain and starts again at 1 once none do.
     private var nextNumber: Int {

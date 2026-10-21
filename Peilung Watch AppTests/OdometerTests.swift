@@ -301,6 +301,16 @@ struct MarkStoreTests {
         #expect(store.add(here).name == "Mark 10")
     }
 
+    @Test func enteredPointBecomesAMarkOnce() {
+        let store = MarkStore(store: Store(url: url))
+        let entered = Coordinate(latitude: 29.76, longitude: -95.36)
+        let first = store.mark(at: entered)
+        #expect(first.name == "Mark 1")
+        #expect(store.mark(at: entered).id == first.id)
+        #expect(store.marks.count == 1)
+        #expect(store.mark(at: here).name == "Mark 2")
+    }
+
     @Test func renameTrimsAndRejectsBlank() {
         let store = MarkStore(store: Store(url: url))
         let mark = store.add(here)

@@ -7,6 +7,7 @@ import SwiftUI
 struct NavigateView: View {
     @Environment(LocationModel.self) private var location
     @Environment(Navigator.self) private var navigator
+    @Environment(MarkStore.self) private var marks
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(Units.storageKey) private var units = Units.localeDefault
@@ -64,7 +65,7 @@ struct NavigateView: View {
             switch kind {
             case .coordinates:
                 TargetEntryView(start: location.coordinate ?? navigator.goalCoordinate ?? Coordinate(latitude: 0, longitude: 0)) {
-                    navigator.navigate(to: Target(name: "Target", coordinate: $0))
+                    navigator.navigate(to: marks.mark(at: $0).target)
                     entry = nil
                 }
             case .bearing:
