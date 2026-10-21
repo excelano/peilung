@@ -18,9 +18,10 @@ struct NavigateView: View {
     /// Whether the last tap said on bearing, so a swing out and back that settles where it began stays quiet.
     @State private var announcedOn = false
 
-    /// How long a change in bearing must hold, with the screen up, before it taps.
-    /// Raising or lowering the wrist swings the compass before the screen changes state.
-    private static let driftSettle = Duration.milliseconds(500)
+    /// How long being off bearing must hold, with the screen up, before it taps. Lowering
+    /// the wrist swings the compass before the screen dims, and a false turn cue misleads;
+    /// a false on-bearing tap does not, so that one plays at once.
+    private static let driftSettle = Duration.seconds(1)
     /// The first tap on the goal's title arms Stop for a few seconds; a second tap stops.
     @State private var isStopArmed = false
 
@@ -250,27 +251,31 @@ struct NavigateView: View {
         pendingDrift = nil
     }
 
-    /// Bearing cues wait until a change has held for `driftSettle` with the screen up, then
-    /// tap only if the state differs from the last one announced. A wait cut short by the
+    /// On bearing taps at once. Off bearing waits until it has held for `driftSettle` with
+    /// the screen up, and taps only if the last tap said on bearing; a wait cut short by the
     /// screen dimming is restarted by the next reading once the screen is back.
     private func cueDrift() {
         guard canCue, case .bearing(let line) = navigator.goal, let heading = location.magneticHeading else { return }
         let changed = hold.update(deviation: line.magnetic - heading) != nil
-        guard changed || (hold.isOn != announcedOn && pendingDrift == nil) else { return }
+        if hold.isOn {
+            stopPendingDrift()
+            if !announcedOn {
+                announcedOn = true
+                Haptics.play(Haptics.onBearing)
+            }
+            return
+        }
+        guard announcedOn, changed || pendingDrift == nil else { return }
         pendingDrift?.cancel()
         pendingDrift = Task {
             try? await Task.sleep(for: Self.driftSettle)
             guard !Task.isCancelled else { return }
             pendingDrift = nil
-            guard hold.isOn != announcedOn, let heading = location.magneticHeading else { return }
+            guard !hold.isOn, let heading = location.magneticHeading else { return }
             let deviation = Compass.signed(line.magnetic - heading)
-            if hold.isOn, abs(deviation) <= BearingHold.offBeyond {
-                announcedOn = true
-                Haptics.play(Haptics.onBearing)
-            } else if !hold.isOn, abs(deviation) > BearingHold.onWithin {
-                announcedOn = false
-                Haptics.play(deviation > 0 ? Haptics.turnRight : Haptics.turnLeft)
-            }
+            guard abs(deviation) > BearingHold.onWithin else { return }
+            announcedOn = false
+            Haptics.play(deviation > 0 ? Haptics.turnRight : Haptics.turnLeft)
         }
     }
 }
