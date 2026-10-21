@@ -13,6 +13,7 @@ struct NavigateView: View {
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
     @State private var entry: Entry?
     @State private var hold = BearingHold()
+    @State private var arrival = Arrival()
     @State private var isConfirmingStop = false
 
     enum Entry: Identifiable {
@@ -57,7 +58,6 @@ struct NavigateView: View {
                 }
             case .bearing:
                 BearingEntryView {
-                    hold = BearingHold()
                     navigator.follow($0)
                     entry = nil
                 }
@@ -66,8 +66,16 @@ struct NavigateView: View {
         .confirmationDialog("Stop navigating?", isPresented: $isConfirmingStop) {
             Button("Stop", role: .destructive) { navigator.clear() }
         }
+        .onChange(of: navigator.goal) {
+            hold = BearingHold()
+            arrival = Arrival()
+        }
         .onChange(of: location.magneticHeading) { cueDrift() }
-        .onChange(of: scenePhase) { cueDrift() }
+        .onChange(of: location.location?.timestamp) { cueArrival() }
+        .onChange(of: scenePhase) {
+            cueDrift()
+            cueArrival()
+        }
         .onAppear {
             cueDrift()
             #if DEBUG
@@ -200,10 +208,18 @@ struct NavigateView: View {
         }
     }
 
-    /// Taps only while the screen is up, so a swinging arm with the wrist down stays quiet.
+    /// Cues tap only while the screen is up, so a swinging arm with the wrist down stays quiet.
+    private var canCue: Bool { scenePhase == .active && !isLuminanceReduced }
+
+    private func cueArrival() {
+        guard canCue, case .point(let target) = navigator.goal, let fix = location.freshLocation() else { return }
+        if arrival.update(distance: Coordinate(fix.coordinate).distance(to: target.coordinate)) {
+            Haptics.play(.notification)
+        }
+    }
+
     private func cueDrift() {
-        guard scenePhase == .active, !isLuminanceReduced,
-              case .bearing(let line) = navigator.goal, let heading = location.magneticHeading else { return }
+        guard canCue, case .bearing(let line) = navigator.goal, let heading = location.magneticHeading else { return }
         switch hold.update(deviation: line.magnetic - heading) {
         case .onBearing: Haptics.play(.success)
         case .turnLeft: Haptics.play(.navigationLeftTurn)

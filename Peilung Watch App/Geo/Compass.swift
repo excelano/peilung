@@ -38,3 +38,22 @@ enum CompassWarning {
         return "Compass ±\(Int(accuracy.rounded()))°. Move the watch in a figure 8 to calibrate."
     }
 }
+
+/// Whether you have reached a point, with hysteresis so GPS noise at the target
+/// does not announce the arrival over and over.
+struct Arrival: Equatable {
+    /// Leaving again takes twice the arrival distance.
+    static let leaveMeters = Compass.nearTargetMeters * 2
+
+    private(set) var isNear = false
+
+    /// Returns true once, on arriving.
+    mutating func update(distance: Double) -> Bool {
+        if isNear {
+            if distance > Self.leaveMeters { isNear = false }
+            return false
+        }
+        isNear = distance < Compass.nearTargetMeters
+        return isNear
+    }
+}

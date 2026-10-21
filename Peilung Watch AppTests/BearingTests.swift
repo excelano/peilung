@@ -204,3 +204,32 @@ struct NavigatorTests {
         #expect(Navigator(store: Store(url: url), defaults: defaults).goal == nil)
     }
 }
+
+struct ArrivalTests {
+    @Test func announcesOnceOnArriving() {
+        var arrival = Arrival()
+        #expect(arrival.update(distance: 150) == false)
+        #expect(arrival.update(distance: 10) == false)
+        #expect(arrival.update(distance: 9.9) == true)
+        #expect(arrival.isNear)
+        #expect(arrival.update(distance: 4) == false)
+        #expect(arrival.update(distance: 9) == false)
+    }
+
+    @Test func gpsWobbleAtTheTargetStaysQuiet() {
+        var arrival = Arrival()
+        _ = arrival.update(distance: 5)
+        for distance in [12.0, 8, 18, 6, 20] {
+            #expect(arrival.update(distance: distance) == false)
+        }
+        #expect(arrival.isNear)
+    }
+
+    @Test func leavingRearmsIt() {
+        var arrival = Arrival()
+        _ = arrival.update(distance: 5)
+        #expect(arrival.update(distance: 20.1) == false)
+        #expect(!arrival.isNear)
+        #expect(arrival.update(distance: 7) == true)
+    }
+}
