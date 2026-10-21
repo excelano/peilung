@@ -66,3 +66,19 @@ struct CoordinateEntryTests {
         #expect(near.coordinate.longitudeText == "E 179° 59.999")
     }
 }
+
+struct CrownTests {
+    @Test func countsDetentsTurned() {
+        #expect(Crown.steps(from: 10, to: 13) == 3)
+        #expect(Crown.steps(from: 13, to: 10) == -3)
+        #expect(Crown.steps(from: 10.4, to: 10.6) == 1)
+        #expect(Crown.steps(from: 10, to: 10.3) == 0)
+    }
+
+    @Test func wrapsTheShortWayRound() {
+        #expect(Crown.steps(from: 99, to: 0) == 1)
+        #expect(Crown.steps(from: 0, to: 99) == -1)
+        #expect(Crown.steps(from: 97, to: 2) == 5)
+        #expect(Crown.steps(from: 98.6, to: 0.2) == 1)
+    }
+}

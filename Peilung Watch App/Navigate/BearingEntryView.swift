@@ -32,7 +32,10 @@ struct BearingEntryView: View {
                     .foregroundStyle(.secondary)
             }
             .foregroundStyle(fixed == nil ? Color.accentColor : .primary)
-            .crownInput($crown, focus: $isFocused)
+            .crownInput($crown, focus: $isFocused) { steps in
+                let shown = magnetic.map { north.shown(magnetic: $0) } ?? 0
+                fixed = north.magnetic(shown: shown.rounded() + Double(steps))
+            }
             if fixed == nil, let warning = CompassWarning.text(location.headingAccuracy) {
                 Text(warning)
                     .font(.footnote)
@@ -58,12 +61,6 @@ struct BearingEntryView: View {
                     .tint(.green)
                     .disabled(magnetic == nil)
             }
-        }
-        .onChange(of: crown) { old, new in
-            let steps = Int(new.rounded()) - Int(old.rounded())
-            guard steps != 0 else { return }
-            let shown = magnetic.map { north.shown(magnetic: $0) } ?? 0
-            fixed = north.magnetic(shown: shown.rounded() + Double(steps))
         }
     }
 

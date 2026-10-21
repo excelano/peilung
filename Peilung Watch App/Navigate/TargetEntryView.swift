@@ -28,7 +28,7 @@ struct TargetEntryView: View {
                 row([.latHemisphere, .latDegrees, .latMinutes, .latHundredths, .latTens, .latOnes])
                 row([.lonHemisphere, .lonDegrees, .lonMinutes, .lonHundredths, .lonTens, .lonOnes])
             }
-            .crownInput($crown, focus: $isFocused)
+            .crownInput($crown, focus: $isFocused) { entry.adjust(field, by: $0) }
             HStack {
                 Button("Previous field", systemImage: "chevron.left") { move(by: -1) }
                 Button("Next field", systemImage: "chevron.right") { move(by: 1) }
@@ -36,10 +36,6 @@ struct TargetEntryView: View {
             .labelStyle(.iconOnly)
             Button("Go") { onSet(entry.coordinate) }
                 .tint(.green)
-        }
-        .onChange(of: crown) { old, new in
-            let steps = Int(new.rounded()) - Int(old.rounded())
-            if steps != 0 { entry.adjust(field, by: steps) }
         }
     }
 
