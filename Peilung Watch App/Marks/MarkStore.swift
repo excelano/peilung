@@ -19,8 +19,6 @@ struct Mark: Codable, Identifiable, Equatable {
 final class MarkStore {
     struct Contents: Codable {
         var marks: [Mark] = []
-        /// Numbers default names, and keeps counting past deleted marks so a name is never reused.
-        var nextNumber = 1
     }
 
     private(set) var contents: Contents
@@ -37,11 +35,16 @@ final class MarkStore {
 
     @discardableResult
     func add(_ coordinate: Coordinate, at date: Date = .now) -> Mark {
-        let mark = Mark(name: "Mark \(contents.nextNumber)", coordinate: coordinate, date: date)
+        let mark = Mark(name: "Mark \(nextNumber)", coordinate: coordinate, date: date)
         contents.marks.insert(mark, at: 0)
-        contents.nextNumber += 1
         save()
         return mark
+    }
+
+    /// The lowest number no current mark is named after, so an emptied list starts again at 1.
+    private var nextNumber: Int {
+        let taken = Set(contents.marks.map(\.name))
+        return (1...).first { !taken.contains("Mark \($0)") }!
     }
 
     func rename(_ id: Mark.ID, to name: String) {

@@ -63,7 +63,6 @@ enum Demo {
         for (name, north, east, age) in named {
             contents.marks.append(Mark(name: name, coordinate: offset(north: north, east: east), date: now.addingTimeInterval(-age)))
         }
-        contents.nextNumber = 4
         marks.save(contents)
 
         switch scene {
