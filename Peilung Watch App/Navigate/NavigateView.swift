@@ -14,7 +14,8 @@ struct NavigateView: View {
     @State private var entry: Entry?
     @State private var hold = BearingHold()
     @State private var arrival = Arrival()
-    @State private var isConfirmingStop = false
+    /// The first tap on the goal's title arms Stop for a few seconds; a second tap stops.
+    @State private var isStopArmed = false
 
     enum Entry: Identifiable {
         case coordinates, bearing
@@ -63,9 +64,10 @@ struct NavigateView: View {
                 }
             }
         }
-        .alert("Stop navigating?", isPresented: $isConfirmingStop) {
-            Button("Stop", role: .destructive) { navigator.clear() }
-            Button("Cancel", role: .cancel) {}
+        .task(id: isStopArmed) {
+            guard isStopArmed else { return }
+            try? await Task.sleep(for: .seconds(3))
+            isStopArmed = false
         }
         .onChange(of: navigator.goal) {
             hold = BearingHold()
@@ -106,14 +108,28 @@ struct NavigateView: View {
         }
     }
 
-    /// The goal's name; tapping it offers to stop navigating.
+    /// The goal's name; tapping it turns it into a Stop button for a few seconds.
     private func goalTitle(_ title: String) -> some View {
         Button {
-            isConfirmingStop = true
+            if isStopArmed {
+                isStopArmed = false
+                navigator.clear()
+                Haptics.play(.click)
+            } else {
+                isStopArmed = true
+            }
         } label: {
             HStack(spacing: 3) {
-                Text(title).lineLimit(1)
-                Image(systemName: "xmark.circle.fill")
+                if isStopArmed {
+                    Text("Stop navigating")
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(.red.opacity(0.25), in: .capsule)
+                } else {
+                    Text(title).lineLimit(1)
+                    Image(systemName: "xmark.circle.fill")
+                }
             }
             .font(.footnote.monospacedDigit())
             .foregroundStyle(.secondary)
