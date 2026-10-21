@@ -11,7 +11,7 @@ apple-review-notes = """
 Peilung is a field navigation kit for Apple Watch, for hiking, geocaching and orienteering. It is watch-only; the iOS app in this package is an empty container that App Store Connect requires, and everything is reviewed on the watch. There is no sign-in, no account and no network connection.
 
 PERMISSIONS
-Peilung asks for Location (while using the app) when it first opens, to show coordinates and the distance and direction to a target, and for Motion & Fitness the first time Start is pressed on the odometer, to read walking distance from the watch's step count. Both are used on the watch only.
+When it first opens, Peilung asks for Motion & Fitness, to read walking distance from the watch's step count for the odometer, and for Location (while using the app), to show coordinates and the distance and direction to a target. Both are used on the watch only. The compass works with both denied; the odometer and the GPS pages then say which permission to allow in Settings.
 
 WHAT TO TRY (all of it works indoors)
 1. Navigate is the first page and opens as a compass. Turn around and the ring and the heading follow.

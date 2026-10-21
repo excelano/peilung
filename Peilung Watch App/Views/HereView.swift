@@ -99,12 +99,19 @@ struct LocationStatusView: View {
 
     var body: some View {
         if location.isDenied {
-            Text("Location access denied. Enable it in Settings > Privacy.")
-                .font(.footnote)
+            message("Allow Location in Settings > Privacy.")
         } else if let error = location.errorText {
-            Text(error).font(.footnote)
+            message(error)
         } else {
             ProgressView("Getting fix…")
         }
+    }
+
+    private func message(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundStyle(.orange)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
     }
 }
