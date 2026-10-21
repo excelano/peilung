@@ -63,8 +63,9 @@ struct NavigateView: View {
                 }
             }
         }
-        .confirmationDialog("Stop navigating?", isPresented: $isConfirmingStop) {
+        .alert("Stop navigating?", isPresented: $isConfirmingStop) {
             Button("Stop", role: .destructive) { navigator.clear() }
+            Button("Cancel", role: .cancel) {}
         }
         .onChange(of: navigator.goal) {
             hold = BearingHold()
