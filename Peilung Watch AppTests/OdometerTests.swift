@@ -224,7 +224,7 @@ struct OdometerModelTests {
         #expect(model.message(at: .now) == model.errorText)
         #expect(model.message(at: .now.addingTimeInterval(8 * 86_400))?.hasPrefix("Started over 7 days ago") == true)
         pedometer.isDenied = true
-        #expect(model.message(at: .now) == "Allow Motion & Fitness in Settings > Privacy.")
+        #expect(model.message(at: .now) == "On your iPhone, allow Motion & Fitness in Settings > Privacy.")
         pedometer.isAvailable = false
         #expect(model.message(at: .now) == "This watch can't measure walking distance.")
     }

@@ -99,7 +99,7 @@ struct LocationStatusView: View {
 
     var body: some View {
         if location.isDenied {
-            message("Allow Location in Settings > Privacy.")
+            message("On your iPhone, allow Location in Settings > Privacy.")
         } else if let error = location.errorText {
             message(error)
         } else {
