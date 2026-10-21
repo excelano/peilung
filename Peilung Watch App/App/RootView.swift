@@ -26,7 +26,7 @@ struct RootView: View {
             .tabViewStyle(.verticalPage)
         }
         #if DEBUG
-        .task { await Demo.playHapticsIfAsked() }
+        .overlay { if Demo.samplesHaptics { HapticsSampler() } }
         #endif
         .onChange(of: scenePhase, initial: true) { updateSensors() }
         .onChange(of: navigator.page) { updateSensors() }

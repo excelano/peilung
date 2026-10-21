@@ -215,16 +215,16 @@ struct NavigateView: View {
     private func cueArrival() {
         guard canCue, case .point(let target) = navigator.goal, let fix = location.freshLocation() else { return }
         if arrival.update(distance: Coordinate(fix.coordinate).distance(to: target.coordinate)) {
-            Haptics.play(.notification)
+            Haptics.play(Haptics.arrived)
         }
     }
 
     private func cueDrift() {
         guard canCue, case .bearing(let line) = navigator.goal, let heading = location.magneticHeading else { return }
         switch hold.update(deviation: line.magnetic - heading) {
-        case .onBearing: Haptics.play(.success)
-        case .turnLeft: Haptics.play(.navigationLeftTurn)
-        case .turnRight: Haptics.play(.navigationRightTurn)
+        case .onBearing: Haptics.play(Haptics.onBearing)
+        case .turnLeft: Haptics.play(Haptics.turnLeft)
+        case .turnRight: Haptics.play(Haptics.turnRight)
         case nil: break
         }
     }

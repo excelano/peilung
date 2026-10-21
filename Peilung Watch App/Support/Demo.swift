@@ -5,6 +5,7 @@
 #if DEBUG
 import CoreLocation
 import Foundation
+import SwiftUI
 import WatchKit
 
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
@@ -14,7 +15,7 @@ import WatchKit
 ///                                                           odometer, marks, and no goal, a point
 ///                                                           or a bearing
 ///     --entry coordinates|bearing                   also opens that entry sheet on Navigate
-///     --haptics                                     plays each navigation cue in turn, to feel them
+///     --haptics                                     plays each navigation cue in turn, named on screen
 enum Demo {
     static let here = Coordinate(latitude: 29.75205, longitude: -95.3742667)
 
@@ -26,14 +27,7 @@ enum Demo {
 
     private static var scene: String? { argument(after: "--demo") }
 
-    /// Left turn, right turn, on bearing, arrived, four seconds apart.
-    static func playHapticsIfAsked() async {
-        guard CommandLine.arguments.contains("--haptics") else { return }
-        for cue in [WKHapticType.navigationLeftTurn, .navigationRightTurn, .success, .notification] {
-            try? await Task.sleep(for: .seconds(4))
-            Haptics.play(cue)
-        }
-    }
+    static var samplesHaptics: Bool { CommandLine.arguments.contains("--haptics") }
 
     static var page: Page? {
         switch scene {
@@ -100,6 +94,36 @@ enum Demo {
             latitude: here.latitude + north / metersPerDegree,
             longitude: here.longitude + east / (metersPerDegree * cos(here.latitude * .pi / 180))
         )
+    }
+}
+/// Plays each navigation cue three times, naming it on screen, so they can be told apart.
+struct HapticsSampler: View {
+    private static let cues: [(String, WKHapticType)] = [
+        ("Turn left", Haptics.turnLeft),
+        ("Turn right", Haptics.turnRight),
+        ("On bearing", Haptics.onBearing),
+        ("Arrived", Haptics.arrived),
+    ]
+
+    @State private var playing = "Get ready"
+
+    var body: some View {
+        Text(playing)
+            .font(.title2.weight(.semibold))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.black)
+            .task {
+                try? await Task.sleep(for: .seconds(3))
+                for (name, cue) in Self.cues {
+                    for round in 1...3 {
+                        playing = "\(name)\n\(round) of 3"
+                        Haptics.play(cue)
+                        try? await Task.sleep(for: .seconds(3))
+                    }
+                }
+                playing = "Done"
+            }
     }
 }
 #endif
