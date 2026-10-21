@@ -34,6 +34,7 @@ struct BearingEntryView: View {
                     .foregroundStyle(.secondary)
             }
             .foregroundStyle(fixed == nil ? Color.accentColor : .primary)
+            .crownInput($crown, focus: $isFocused)
             Text(hint)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -55,15 +56,10 @@ struct BearingEntryView: View {
                     .disabled(shown == nil)
             }
         }
-        .focusable()
-        .focused($isFocused)
-        .digitalCrownRotation($crown, from: -1_000_000, through: 1_000_000, by: 1,
-                              sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
         .onChange(of: crown) { old, new in
             let steps = Int(new.rounded()) - Int(old.rounded())
             if steps != 0 { fixed = Compass.normalized((shown ?? 0).rounded() + Double(steps)) }
         }
-        .onAppear { isFocused = true }
     }
 
     private var hint: String {

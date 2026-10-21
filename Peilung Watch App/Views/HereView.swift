@@ -12,12 +12,15 @@ struct HereView: View {
     @State private var savedName: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 6) {
             if let fix = location.location {
-                CoordinateText(coordinate: Coordinate(fix.coordinate))
-                Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
-                    .font(.footnote)
-                    .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
+                VStack(alignment: .leading, spacing: 6) {
+                    CoordinateText(coordinate: Coordinate(fix.coordinate))
+                    Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
+                        .font(.footnote)
+                        .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 if !isLuminanceReduced {
                     Spacer(minLength: 0)
                     markButton(fix)
@@ -26,7 +29,6 @@ struct HereView: View {
                 LocationStatusView()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .navigationTitle("Here")
     }
 
@@ -37,7 +39,6 @@ struct HereView: View {
             savedName = mark.name
         } label: {
             Text(savedName.map { "Saved \($0)" } ?? "Mark")
-                .frame(maxWidth: .infinity)
         }
         .task(id: savedName) {
             guard savedName != nil else { return }

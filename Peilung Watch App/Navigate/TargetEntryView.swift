@@ -24,8 +24,11 @@ struct TargetEntryView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            row([.latHemisphere, .latDegrees, .latMinutes, .latHundredths, .latTens, .latOnes])
-            row([.lonHemisphere, .lonDegrees, .lonMinutes, .lonHundredths, .lonTens, .lonOnes])
+            VStack(spacing: 6) {
+                row([.latHemisphere, .latDegrees, .latMinutes, .latHundredths, .latTens, .latOnes])
+                row([.lonHemisphere, .lonDegrees, .lonMinutes, .lonHundredths, .lonTens, .lonOnes])
+            }
+            .crownInput($crown, focus: $isFocused)
             HStack {
                 Button("Previous field", systemImage: "chevron.left") { move(by: -1) }
                 Button("Next field", systemImage: "chevron.right") { move(by: 1) }
@@ -34,15 +37,10 @@ struct TargetEntryView: View {
             Button("Go") { onSet(entry.coordinate) }
                 .tint(.green)
         }
-        .focusable()
-        .focused($isFocused)
-        .digitalCrownRotation($crown, from: -1_000_000, through: 1_000_000, by: 1,
-                              sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
         .onChange(of: crown) { old, new in
             let steps = Int(new.rounded()) - Int(old.rounded())
             if steps != 0 { entry.adjust(field, by: steps) }
         }
-        .onAppear { isFocused = true }
     }
 
     private func row(_ fields: [Field]) -> some View {
@@ -66,12 +64,16 @@ struct TargetEntryView: View {
         Text(entry.text(item))
             .padding(.vertical, 2)
             .background(item == field ? Color.accentColor.opacity(0.45) : .clear, in: .rect(cornerRadius: 3))
-            .onTapGesture { field = item }
+            .onTapGesture {
+                field = item
+                isFocused = true
+            }
     }
 
     private func move(by offset: Int) {
         let all = Field.allCases
         field = all[(field.rawValue + offset + all.count) % all.count]
+        isFocused = true
         Haptics.play(.click)
     }
 }
