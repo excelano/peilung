@@ -1,0 +1,9 @@
+xcuserdata/
+*.xcuserstate
+build/
+DerivedData/
+ship.toml
+SPEC.md
+/target/
+/packaging/ios/screenshots/
+HANDOFF.md
