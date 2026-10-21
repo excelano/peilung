@@ -20,6 +20,8 @@ GPS-based navigation is not allowed during most orienteering competitions; check
 
 **Marks** lists saved points with their age and distance from here. Tap one to navigate to it, swipe to rename or delete it. The units and North settings live at the bottom of this list.
 
+A complication opens Peilung from the watch face, in the circular, corner, rectangular and inline slots.
+
 GPS runs only while Peilung is on screen. Raising the wrist within the watch's Return to Clock time brings it back where you left it, and a fresh fix follows within seconds.
 
 ## Building
