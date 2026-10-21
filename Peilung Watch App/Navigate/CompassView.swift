@@ -29,6 +29,13 @@ struct CompassView: View {
             ZStack {
                 Circle()
                     .stroke(.secondary.opacity(0.5), lineWidth: 2)
+                ForEach([90.0, 180, 270], id: \.self) { quarter in
+                    Capsule()
+                        .fill(.secondary)
+                        .frame(width: 2, height: size * 0.09)
+                        .offset(y: -size * 0.455)
+                        .rotationEffect(.degrees(shownNorth + quarter))
+                }
                 Text("N")
                     .font(.system(size: size * 0.14, weight: .bold))
                     .foregroundStyle(.red)
