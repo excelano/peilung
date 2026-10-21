@@ -58,7 +58,7 @@ struct NavigateView: View {
                 Button("Bearing", systemImage: "location.north.line") { entry = .bearing }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Coordinates", systemImage: "target") { entry = .coordinates }
+                Button("Coordinates", systemImage: "scope") { entry = .coordinates }
             }
         }
         .sheet(item: $entry) { kind in
@@ -183,7 +183,7 @@ struct NavigateView: View {
                 CompassView(
                     arrow: isNear ? nil : bearing.map { $0 - (trueHeading ?? 0) },
                     north: -(shownHeading ?? 0),
-                    marker: isNear ? .scope : .arrow(onCourse: trueHeading != nil && aim.isOn)
+                    marker: isNear ? .arrived : .arrow(onCourse: trueHeading != nil && aim.isOn)
                 )
                 .frame(maxHeight: .infinity)
             }

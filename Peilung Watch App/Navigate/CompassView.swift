@@ -12,7 +12,7 @@ struct CompassView: View {
         /// The plain compass: a fixed mark at 12 o'clock to read the heading against.
         case index
         /// At the target, where direction no longer means anything.
-        case scope
+        case arrived
     }
 
     let arrow: Double?
@@ -49,9 +49,9 @@ struct CompassView: View {
                         .font(.system(size: size * 0.11))
                         .foregroundStyle(.tint)
                         .offset(y: -size * 0.5)
-                case .scope:
-                    Image(systemName: "scope")
-                        .font(.system(size: size * 0.4))
+                case .arrived:
+                    Image(systemName: "flag.fill")
+                        .font(.system(size: size * 0.36))
                         .foregroundStyle(.green)
                 case .arrow(let onCourse):
                     if arrow != nil {

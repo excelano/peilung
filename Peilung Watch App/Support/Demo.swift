@@ -11,9 +11,10 @@ import WatchKit
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
 /// the location prompt:
 ///
-///     --demo compass|navigate|bearing|odometer|here|marks   fixed position and compass, a running
-///                                                           odometer, marks, and no goal, a point
-///                                                           or a bearing
+///     --demo compass|navigate|arrived|bearing|odometer|here|marks
+///                                                   fixed position and compass, a running odometer,
+///                                                   marks, and no goal, a point, a point reached
+///                                                   or a bearing
 ///     --entry coordinates|bearing                   also opens that entry sheet on Navigate
 ///     --haptics                                     plays each navigation cue in turn, named on screen
 enum Demo {
@@ -33,7 +34,7 @@ enum Demo {
         switch scene {
         case "odometer": .odometer
         case "here": .here
-        case "compass", "navigate", "bearing": .navigate
+        case "compass", "navigate", "arrived", "bearing": .navigate
         case "marks": .marks
         default: nil
         }
@@ -68,6 +69,8 @@ enum Demo {
         switch scene {
         case "compass":
             goal.save(nil)
+        case "arrived":
+            goal.save(.point(Target(name: "Car", coordinate: offset(north: 2, east: 2))))
         case "bearing":
             // Taken 220 m back along 074° true (072° magnetic); here is now 14 m left of the line.
             goal.save(.bearing(BearingLine(magnetic: 72, origin: offset(north: -74.1, east: -207.6))))
