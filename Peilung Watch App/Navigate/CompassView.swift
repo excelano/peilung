@@ -9,6 +9,8 @@ import SwiftUI
 struct CompassView: View {
     enum Marker: Equatable {
         case arrow(onCourse: Bool)
+        /// The plain compass: a fixed mark at 12 o'clock to read the heading against.
+        case index
         /// At the target, where direction no longer means anything.
         case scope
     }
@@ -42,6 +44,11 @@ struct CompassView: View {
                     .offset(y: -size * 0.38)
                     .rotationEffect(.degrees(shownNorth))
                 switch marker {
+                case .index:
+                    Image(systemName: "arrowtriangle.down.fill")
+                        .font(.system(size: size * 0.11))
+                        .foregroundStyle(.tint)
+                        .offset(y: -size * 0.5)
                 case .scope:
                     Image(systemName: "scope")
                         .font(.system(size: size * 0.4))

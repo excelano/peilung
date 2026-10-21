@@ -102,11 +102,7 @@ struct NavigateView: View {
     private var compass: some View {
         VStack(spacing: 2) {
             if !isLuminanceReduced {
-                CompassView(
-                    arrow: shownHeading == nil ? nil : 0,
-                    north: -(shownHeading ?? 0),
-                    marker: .arrow(onCourse: false)
-                )
+                CompassView(arrow: nil, north: -(shownHeading ?? 0), marker: .index)
                 .frame(maxHeight: .infinity)
             }
             Text(location.magneticHeading.map { north.text(magnetic: $0) } ?? "No compass")
@@ -117,6 +113,12 @@ struct NavigateView: View {
                 compassWarning(warning)
             }
         }
+    }
+
+    /// "358° M · 40° left", or "north up" in place of the turn without a compass.
+    private func pointDetail(bearing: Double, trueHeading: Double?) -> String {
+        guard let trueHeading else { return north.text(true: bearing) + " · north up" }
+        return [north.text(true: bearing), Compass.turn(bearing - trueHeading)].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// The goal's name; tapping it turns it into a Stop button for a few seconds.
@@ -180,7 +182,7 @@ struct NavigateView: View {
                     .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                Text(isNear ? units.format(meters: distance) : north.text(true: bearing) + (trueHeading == nil ? " · north up" : ""))
+                Text(isNear ? units.format(meters: distance) : pointDetail(bearing: bearing, trueHeading: trueHeading))
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(.secondary)
             } else if location.location == nil {

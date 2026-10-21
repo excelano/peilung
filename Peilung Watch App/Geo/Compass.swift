@@ -22,6 +22,14 @@ enum Compass {
         unwrapped(degrees, from: 0)
     }
 
+    /// "40° left" when a target lies well off the way the watch points, nil when it is
+    /// roughly ahead. `deviation` is bearing minus heading.
+    static func turn(_ deviation: Double) -> String? {
+        let degrees = signed(deviation)
+        guard abs(degrees) > BearingHold.offBeyond else { return nil }
+        return "\(Int(abs(degrees).rounded()))° " + (degrees > 0 ? "right" : "left")
+    }
+
     /// The same angle in 0 ..< 360.
     static func normalized(_ degrees: Double) -> Double {
         let value = degrees.truncatingRemainder(dividingBy: 360)

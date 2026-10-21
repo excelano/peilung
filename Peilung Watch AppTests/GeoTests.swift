@@ -123,3 +123,20 @@ struct FreshnessTests {
         #expect(!LocationModel.isFresh(now.addingTimeInterval(-91), at: now, dimmed: true))
     }
 }
+
+struct TurnTests {
+    @Test func namesTheTurnWhenWellOffAhead() {
+        #expect(Compass.turn(0) == nil)
+        #expect(Compass.turn(10) == nil)
+        #expect(Compass.turn(-10) == nil)
+        #expect(Compass.turn(40.4) == "40° right")
+        #expect(Compass.turn(-40.6) == "41° left")
+    }
+
+    @Test func takesTheShortWayRound() {
+        #expect(Compass.turn(350) == nil)
+        #expect(Compass.turn(300) == "60° left")
+        #expect(Compass.turn(-300) == "60° right")
+        #expect(Compass.turn(180) == "180° right")
+    }
+}
