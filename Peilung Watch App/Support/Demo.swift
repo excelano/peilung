@@ -5,6 +5,7 @@
 #if DEBUG
 import CoreLocation
 import Foundation
+import WatchKit
 
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
 /// the location prompt:
@@ -13,6 +14,7 @@ import Foundation
 ///                                                           odometer, marks, and no goal, a point
 ///                                                           or a bearing
 ///     --entry coordinates|bearing                   also opens that entry sheet on Navigate
+///     --haptics                                     plays each navigation cue in turn, to feel them
 enum Demo {
     static let here = Coordinate(latitude: 29.75205, longitude: -95.3742667)
 
@@ -23,6 +25,15 @@ enum Demo {
     }
 
     private static var scene: String? { argument(after: "--demo") }
+
+    /// Left turn, right turn, on bearing, arrived, four seconds apart.
+    static func playHapticsIfAsked() async {
+        guard CommandLine.arguments.contains("--haptics") else { return }
+        for cue in [WKHapticType.navigationLeftTurn, .navigationRightTurn, .success, .notification] {
+            try? await Task.sleep(for: .seconds(4))
+            Haptics.play(cue)
+        }
+    }
 
     static var page: Page? {
         switch scene {

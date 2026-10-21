@@ -25,6 +25,9 @@ struct RootView: View {
             }
             .tabViewStyle(.verticalPage)
         }
+        #if DEBUG
+        .task { await Demo.playHapticsIfAsked() }
+        #endif
         .onChange(of: scenePhase, initial: true) { updateSensors() }
         .onChange(of: navigator.page) { updateSensors() }
         .onChange(of: location.location?.timestamp) {
