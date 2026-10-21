@@ -50,7 +50,7 @@ GPS navigation is not allowed in most orienteering competitions; check the rules
 """
 
 [locales."en-us".apple]
-name = "Peilung: Field Navigation"
+name = "Peilung"
 subtitle = "Compass, bearing and odometer"
 promotional-text = "Take a bearing and follow it by feel: the watch taps when you're on line and when you drift. Plus point navigation, a distance odometer and your coordinates."
 keywords = "compass,bearing,orienteering,geocaching,hiking,gps,coordinates,odometer,distance,waypoint,trail,walk"
