@@ -8,7 +8,7 @@
 # description 4,000, apple-review-notes 4,000.
 
 apple-review-notes = """
-Peilung is a field navigation kit for Apple Watch, for hiking, geocaching and orienteering. It is watch-only; the iOS app in this package is an empty container that App Store Connect requires, and everything is reviewed on the watch. There is no sign-in, no account and no network connection.
+Peilung is a navigation app for people on foot: hikers, geocachers and orienteers. All of it runs on Apple Watch. The iPhone side of the upload is only the empty container Apple requires to deliver a watch-only app, so please review Peilung on the watch. Peilung has no login and makes no network connection.
 
 PERMISSIONS
 When it first opens, Peilung asks for Motion & Fitness, to read walking distance from the watch's step count for the odometer, and for Location (while using the app), to show coordinates and the distance and direction to a target. Both are used on the watch only. The compass works with both denied; the odometer and the GPS pages then say which permission to allow in the iPhone's Settings.
@@ -23,10 +23,8 @@ WHAT TO TRY (all of it works indoors)
 
 GPS navigation is not allowed in most orienteering competitions, and the app's description says so.
 
-PRIVACY
-Peilung makes no network request and collects nothing. Location and step distance are read on the watch while they are needed and never leave it. The app keeps its odometer reading, saved marks, current target and settings on the watch. The privacy policy is at https://excelano.com/legal/#peilung and the complete source is public at https://github.com/excelano/peilung.
-
-Contact for review questions: David M. Anderson, david.anderson@excelano.com.
+DATA
+Location and step distance are read on the watch while a page needs them, and nothing is sent off it. What Peilung keeps there is its own working state: the odometer, saved marks, the current target and its settings. Privacy policy: https://excelano.com/legal/#peilung. Source code: https://github.com/excelano/peilung.
 """
 
 [locales."en-us"]
@@ -34,7 +32,7 @@ website = "https://github.com/excelano/peilung"
 support = "https://github.com/excelano/peilung"
 privacy = "https://excelano.com/legal/#peilung"
 description = """
-Peilung is a field navigation kit for your Apple Watch, for finding your way on foot. It answers the questions you ask on a trail: which way, how far have I come, where am I, and where have I been.
+Peilung puts the navigation kit you would otherwise carry in a pocket onto your wrist: a compass that takes and holds bearings, a way to any point you choose, a distance odometer and your coordinates. It answers the questions you ask on a trail: which way, how far have I come, where am I, and where have I been.
 
 Navigate opens as a compass. Take a bearing by pointing the watch at a landmark and locking it, or dial one in with the Digital Crown from a map, then follow it. The watch taps once when you are on bearing, and taps a turn cue when you drift off, so you can watch the ground instead of the screen. When GPS is available it also shows how far you have strayed to the left or right of the line, which a compass alone cannot tell you after you step around a fallen tree. Bearings are magnetic by default, to match an orienteering map, with true north a setting away.
 
@@ -44,7 +42,7 @@ The Odometer is a stopwatch for distance. Press Start, walk, and look whenever y
 
 Here shows your position in the degrees-and-minutes form geocachers use, and one tap saves it as a mark to come back to.
 
-Peilung runs on the watch alone and needs no iPhone app. It does not start a workout, so it never interrupts one you are recording. There are no ads, no accounts, no in-app purchases and no tracking, and it never goes online. It is open source under the MIT license.
+Everything Peilung uses is built into the watch: the compass, the GPS and the step counter. It needs no phone signal and no iPhone nearby, so it keeps working after the trail leaves coverage behind. It does not start a workout, so it never interrupts one you are recording. Peilung has no account, no ads and nothing to buy, sends nothing anywhere, and its source code is public under the MIT license.
 
 GPS navigation is not allowed in most orienteering competitions; check the rules before using Peilung in one.
 """
