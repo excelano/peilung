@@ -221,8 +221,11 @@ struct NavigateView: View {
     @ViewBuilder
     private func bearingGuidance(along line: BearingLine, at now: Date) -> some View {
         let deviation = location.magneticHeading.map { Compass.signed(line.magnetic - $0) }
-        let offset = location.freshLocation(at: now)
-            .flatMap { line.offset(of: Coordinate($0.coordinate), declination: location.declination) }
+        let fix = location.freshLocation(at: now)
+        let offsetText = fix.flatMap { fix in
+            line.offset(of: Coordinate(fix.coordinate), declination: location.declination)
+                .flatMap { units.offset($0, accuracy: fix.horizontalAccuracy) }
+        }
 
         VStack(spacing: 2) {
             goalTitle(Goal.bearing(line).title(north: north))
@@ -246,8 +249,8 @@ struct NavigateView: View {
             .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            if let offset {
-                Text(units.offset(offset))
+            if let offsetText {
+                Text(offsetText)
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

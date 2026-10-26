@@ -81,10 +81,20 @@ struct UnitsTests {
     }
 
     @Test func offsetFromALine() {
-        #expect(Units.metric.offset((across: -14.2, along: 220)) == "14 m left · 220 m along")
-        #expect(Units.metric.offset((across: 3, along: -40)) == "3 m right · 40 m behind")
-        #expect(Units.metric.offset((across: 0.4, along: 0)) == "on line · 0 m along")
-        #expect(Units.imperial.offset((across: 10, along: 1609.344)) == "33 ft right · 1.00 mi along")
+        #expect(Units.metric.offset((across: -14.2, along: 220), accuracy: 8) == "15 m left · 220 m along ±10 m")
+        #expect(Units.metric.offset((across: 12, along: -40), accuracy: 5) == "10 m right · 40 m behind ±5 m")
+        #expect(Units.imperial.offset((across: 10, along: 1609.344), accuracy: 6) == "30 ft right · 1.00 mi along ±20 ft")
+    }
+
+    @Test func driftWithinTheAccuracyIsOnTheLine() {
+        #expect(Units.metric.offset((across: 4, along: 60), accuracy: 5) == "on line · 60 m along ±5 m")
+        #expect(Units.metric.offset((across: -5, along: 60), accuracy: 5) == "on line · 60 m along ±5 m")
+    }
+
+    @Test func nothingWithinTheAccuracyOfTheStart() {
+        #expect(Units.metric.offset((across: 1, along: -2), accuracy: 6) == nil)
+        #expect(Units.imperial.offset((across: 3, along: 4), accuracy: 5) == nil)
+        #expect(Units.metric.offset((across: 3, along: 5), accuracy: 5) != nil)
     }
 
     @Test func labels() {

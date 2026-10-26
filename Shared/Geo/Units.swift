@@ -41,15 +41,24 @@ enum Units: String, CaseIterable, Identifiable, Codable {
         return String(format: "%.\(digits)f", value)
     }
 
-    /// A position against a bearing line: "14 m left · 220 m along".
-    func offset(_ offset: (across: Double, along: Double)) -> String {
-        let side = abs(offset.across) < 0.5
+    /// A position against a bearing line, "15 m left · 220 m along ±10 m", or nil while
+    /// still within the fix's accuracy of the line's start, where GPS cannot place you on it.
+    /// Drift within the accuracy reads as on the line.
+    func offset(_ offset: (across: Double, along: Double), accuracy: Double) -> String? {
+        guard hypot(offset.across, offset.along) > accuracy else { return nil }
+        let side = abs(offset.across) <= accuracy
             ? "on line"
-            : format(meters: abs(offset.across)) + (offset.across > 0 ? " right" : " left")
+            : rough(abs(offset.across)) + (offset.across > 0 ? " right" : " left")
         let progress = offset.along < 0
-            ? format(meters: -offset.along) + " behind"
-            : format(meters: offset.along) + " along"
-        return side + " · " + progress
+            ? rough(-offset.along) + " behind"
+            : rough(offset.along) + " along"
+        return side + " · " + progress + " ±" + rough(accuracy)
+    }
+
+    /// To the nearest 5 m or 10 ft, finer than GPS can tell.
+    private func rough(_ meters: Double) -> String {
+        let step = self == .metric ? 5 : 3.048
+        return format(meters: max(step, (meters / step).rounded() * step))
     }
 }
 
