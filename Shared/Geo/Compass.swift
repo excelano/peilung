@@ -43,7 +43,7 @@ enum CompassWarning {
 
     static func text(_ accuracy: Double?) -> String? {
         guard let accuracy, accuracy > accuracyLimit else { return nil }
-        return "Compass ±\(Int(accuracy.rounded()))°. Move the watch in a figure 8 to calibrate."
+        return "Compass ±\(Int(accuracy.rounded()))°. Move the \(Device.name) in a figure 8 to calibrate."
     }
 }
 

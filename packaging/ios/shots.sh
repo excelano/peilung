@@ -1,9 +1,10 @@
 #!/bin/sh
 # The App Store screenshots, as recipes. shots-appstore builds the app for the
-# simulator, boots each simulator ship.toml names, installs the embedded watch
-# app, and calls this with the simulator, the language and where the frames go;
-# this file is the half that is Peilung's: which screens, from the positions a
-# Debug build sets up when launched with --demo.
+# simulator, boots each simulator ship.toml names, installs the app (the
+# embedded watch app on a watch), and calls this with the simulator, the
+# language and where the frames go; this file is the half that is Peilung's:
+# which screens, from the positions a Debug build sets up when launched with
+# --demo. Both apps take the same scenes.
 #
 #     ./packaging/ios/shots.sh --app <Peilung.app> --device <udid> --lang en-us --outdir <dir>
 #
@@ -25,11 +26,11 @@ case "$lang" in
     en|en-us|en-US) languages='(en)'; locale=en_US ;;
     *) echo "shots.sh: no set is written for $lang" >&2; exit 2 ;;
 esac
+# A watch simulator runs the embedded watch app, with its own bundle id.
 case "$(xcrun simctl list devices | grep -F "($device)" | head -1)" in
-    *Watch*) ;;
-    *) echo "shots.sh: Peilung is watch-only; $device is not a watch" >&2; exit 2 ;;
+    *Watch*) bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app"/Watch/*.app/Info.plist) ;;
+    *) bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist") ;;
 esac
-bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app"/Watch/*.app/Info.plist)
 mkdir -p "$outdir"
 settle=8
 shot() {

@@ -82,6 +82,7 @@ struct OdometerView: View {
                 Haptics.play(.start)
             }
             .tint(.green)
+            .actionButton()
             .disabled(!odometer.isAvailable || odometer.isDenied)
         case .running:
             Button("Stop") {
@@ -89,11 +90,13 @@ struct OdometerView: View {
                 Haptics.play(.stop)
             }
             .tint(.red)
+            .actionButton()
         case .stopped:
             Button("Reset") {
                 odometer.reset()
                 Haptics.play(.click)
             }
+            .actionButton()
         }
     }
 }

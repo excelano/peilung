@@ -123,6 +123,7 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         MainActor.assumeIsolated {
+            guard !isSimulated else { return }
             self.status = status
             if status == .authorizedWhenInUse || status == .authorizedAlways {
                 self.manager.startUpdatingLocation()

@@ -261,7 +261,7 @@ struct NavigateView: View {
     private func cueArrival() {
         guard canCue, case .point(let target) = navigator.goal, let fix = location.freshLocation() else { return }
         if arrival.update(distance: Coordinate(fix.coordinate).distance(to: target.coordinate)) {
-            Haptics.play(Haptics.arrived)
+            Haptics.play(.arrived)
         }
     }
 
@@ -280,7 +280,7 @@ struct NavigateView: View {
             stopPendingDrift()
             if !announcedOn {
                 announcedOn = true
-                Haptics.play(Haptics.onBearing)
+                Haptics.play(.onBearing)
             }
             return
         }
@@ -294,7 +294,7 @@ struct NavigateView: View {
             let deviation = Compass.signed(line.magnetic - heading)
             guard abs(deviation) > BearingHold.onWithin else { return }
             announcedOn = false
-            Haptics.play(deviation > 0 ? Haptics.turnRight : Haptics.turnLeft)
+            Haptics.play(deviation > 0 ? .turnRight : .turnLeft)
         }
     }
 }

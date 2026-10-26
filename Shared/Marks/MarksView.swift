@@ -78,10 +78,18 @@ private struct RenameView: View {
     var body: some View {
         VStack {
             TextField("Name", text: $name)
+            #if os(iOS)
+                .textFieldStyle(.roundedBorder)
+            #endif
             Button("Save") {
                 onDone(name)
                 dismiss()
             }
+            .actionButton()
         }
+        #if os(iOS)
+        .padding()
+        .presentationDetents([.height(160)])
+        #endif
     }
 }

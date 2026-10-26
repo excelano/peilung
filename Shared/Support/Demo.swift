@@ -6,7 +6,6 @@
 import CoreLocation
 import Foundation
 import SwiftUI
-import WatchKit
 
 /// Debug launch arguments for screenshots and simulator checks, which cannot answer
 /// the location prompt:
@@ -100,11 +99,11 @@ enum Demo {
 }
 /// Plays each navigation cue three times, naming it on screen, so they can be told apart.
 struct HapticsSampler: View {
-    private static let cues: [(String, WKHapticType)] = [
-        ("Turn left", Haptics.turnLeft),
-        ("Turn right", Haptics.turnRight),
-        ("On bearing", Haptics.onBearing),
-        ("Arrived", Haptics.arrived),
+    private static let cues: [(String, Haptic)] = [
+        ("Turn left", .turnLeft),
+        ("Turn right", .turnRight),
+        ("On bearing", .onBearing),
+        ("Arrived", .arrived),
     ]
 
     @State private var playing = "Get ready"

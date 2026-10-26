@@ -13,6 +13,16 @@ struct CoordinateEntry: Equatable {
         case lonHemisphere, lonDegrees, lonMinutes, lonHundredths, lonTens, lonOnes
 
         var isLatitude: Bool { rawValue < Field.lonHemisphere.rawValue }
+
+        /// What follows the field on screen.
+        var separator: String {
+            switch self {
+            case .latHemisphere, .lonHemisphere: " "
+            case .latDegrees, .lonDegrees: "° "
+            case .latMinutes, .lonMinutes: "."
+            default: ""
+            }
+        }
     }
 
     var latitude: DDM
@@ -35,6 +45,14 @@ struct CoordinateEntry: Equatable {
 
     var coordinate: Coordinate {
         Coordinate(latitude: latitude.value, longitude: longitude.value)
+    }
+
+    /// "5.76 mi · 358° M" from where you are to the entered point; at it, no bearing.
+    func offset(from here: Coordinate?, units: Units, north: North) -> String {
+        guard let here else { return "No position yet" }
+        let distance = here.distance(to: coordinate)
+        guard distance >= 1 else { return "Where you are" }
+        return units.format(meters: distance) + " · " + north.text(true: here.bearing(to: coordinate))
     }
 
     mutating func adjust(_ field: Field, by steps: Int) {

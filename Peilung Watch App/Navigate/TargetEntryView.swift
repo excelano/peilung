@@ -33,7 +33,7 @@ struct TargetEntryView: View {
                 row([.lonHemisphere, .lonDegrees, .lonMinutes, .lonHundredths, .lonTens, .lonOnes])
             }
             .crownInput($crown, focus: $isFocused) { entry.adjust(field, by: $0) }
-            Text(offset)
+            Text(entry.offset(from: location.coordinate, units: units, north: North(reference, declination: location.declination)))
                 .font(.footnote.monospacedDigit())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -48,26 +48,11 @@ struct TargetEntryView: View {
         }
     }
 
-    /// "5.76 mi · 358° M" from where you are to the entered point; at it, no bearing.
-    private var offset: String {
-        guard let here = location.coordinate else { return "No position yet" }
-        let target = entry.coordinate
-        let distance = here.distance(to: target)
-        guard distance >= 1 else { return "Where you are" }
-        let north = North(reference, declination: location.declination)
-        return units.format(meters: distance) + " · " + north.text(true: here.bearing(to: target))
-    }
-
     private func row(_ fields: [Field]) -> some View {
         HStack(spacing: 0) {
             ForEach(fields, id: \.self) { item in
                 segment(item)
-                switch item {
-                case .latHemisphere, .lonHemisphere: Text(" ")
-                case .latDegrees, .lonDegrees: Text("° ")
-                case .latMinutes, .lonMinutes: Text(".")
-                default: EmptyView()
-                }
+                Text(item.separator)
             }
         }
         .font(.system(size: 22, weight: .semibold, design: .monospaced))

@@ -28,10 +28,10 @@ final class OdometerModel {
 
     /// Why the reading can't be trusted or taken, if it can't.
     func message(at now: Date) -> String? {
-        if !isAvailable { return "This watch can't measure walking distance." }
-        if isDenied { return "On your iPhone, allow Motion & Fitness in Settings > Privacy." }
+        if !isAvailable { return "This \(Device.name) can't measure walking distance." }
+        if isDenied { return Device.allow("Motion & Fitness") }
         if state.phase == .running && state.exceedsHistory(at: now) {
-            return "Started over 7 days ago; the watch keeps only 7 days of steps."
+            return "Started over 7 days ago; the \(Device.name) keeps only 7 days of steps."
         }
         return errorText
     }

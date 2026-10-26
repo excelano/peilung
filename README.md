@@ -1,8 +1,8 @@
 # Peilung
 
-Peilung is a field navigation kit for Apple Watch, for finding your way on foot when hiking, geocaching or orienteering. It answers the questions you ask on a trail: which way to go, how far you have come, where you are, and where you have been. A compass that can take and hold a bearing, navigation to a point, a distance odometer, your coordinates and saved marks all live in one app on the wrist.
+Peilung is a field navigation kit for Apple Watch and iPhone, for finding your way on foot when hiking, geocaching or orienteering. It answers the questions you ask on a trail: which way to go, how far you have come, where you are, and where you have been. A compass that can take and hold a bearing, navigation to a point, a distance odometer, your coordinates and saved marks all live in one app, on the wrist or in the hand.
 
-It runs on the watch alone, with no iPhone app, no account, no network, no ads and no analytics, and it does not start a workout, so it never interrupts one you are recording in another app.
+The watch app and the iPhone app do the same things and each works on its own: the watch app needs no iPhone nearby, and neither needs an account or a network. Each keeps its own marks, odometer and settings. There are no ads and no analytics, and Peilung does not start a workout, so it never interrupts one you are recording in another app.
 
 ## Using it
 
@@ -24,21 +24,25 @@ GPS-based navigation is not allowed during most orienteering competitions; check
 
 A complication opens Peilung from the watch face, in the circular, corner, rectangular and inline slots.
 
-GPS runs only while Peilung is on screen. Raising the wrist within the watch's Return to Clock time brings it back where you left it, and a fresh fix follows within seconds. That time is two minutes unless changed; setting it to an hour for Peilung alone, under Settings, General, Return to Clock on the watch, keeps the app on the wrist through a walk.
+**On iPhone** the pages are tabs instead of vertical pages, and the rest follows from holding a phone instead of wearing a watch. The top edge of the iPhone stands in for 12 o'clock, so the compass reads the way the top of the phone points; hold it flat, screen up, in portrait. Where the watch takes the Digital Crown, the iPhone takes a drag up or down on the number or the coordinates, or the buttons below them, and the turn cues play as growing taps for right and fading ones for left. The odometer counts the iPhone's own steps, so it measures a walk only when the phone is carried on it. The complication is the watch's alone.
+
+GPS runs only while Peilung is on screen, and on the iPhone it stops when the phone locks. Raising the wrist within the watch's Return to Clock time brings it back where you left it, and a fresh fix follows within seconds. That time is two minutes unless changed; setting it to an hour for Peilung alone, under Settings, General, Return to Clock on the watch, keeps the app on the wrist through a walk.
 
 ## Building
 
-Open `Peilung.xcodeproj` in Xcode. The `Peilung Watch App` scheme builds the watch app for a watch or the simulator and runs the tests. The App Store accepts a watch-only app inside an iOS stub with no code, so the `Peilung` scheme archives that stub with the watch app embedded.
+Open `Peilung.xcodeproj` in Xcode. The `Peilung` scheme builds the iPhone app with the watch app embedded, and archives the two for the App Store; the `Peilung Watch App` scheme builds the watch app alone for a watch or the simulator and runs the tests.
+
+Both apps compile `Shared`, which holds the models and the four pages. `Peilung` and `Peilung Watch App` hold what differs by device: the coordinate and bearing entry sheets, the haptics, and the wording and button style in `Support/Platform.swift`.
 
 The identity a fork changes, meaning the team id, the bundle ids and the display name, lives in `Config/Peilung.xcconfig`, and the version in `Config/Version.xcconfig`. The project has no dependencies beyond Apple's frameworks.
 
 The complication is its own extension target, `PeilungWidgets`, embedded in the watch app.
 
-The simulator has no pedometer, so a simulator build walks at a steady pace instead. A Debug build launched with `--demo` and a scene name replaces Core Location with a fixed position and compass and fills in a running odometer, marks and a goal, for screenshots; adding `--entry coordinates` or `--entry bearing` opens that entry sheet. The scenes are listed in `Support/Demo.swift`. A Debug build launched with `--haptics` plays each navigation cue in turn with its name on screen, which is the way to feel them on a watch.
+A simulator has no pedometer, so a simulator build walks at a steady pace instead. A Debug build launched with `--demo` and a scene name replaces Core Location with a fixed position and compass and fills in a running odometer, marks and a goal, for screenshots; adding `--entry coordinates` or `--entry bearing` opens that entry sheet. The scenes are listed in `Support/Demo.swift`. A Debug build launched with `--haptics` plays each navigation cue in turn with its name on screen, which is the way to feel them on a device.
 
 ## Privacy
 
-Peilung makes no network connection. It reads your location while it is on screen and your step distance while the odometer runs. On the watch it keeps the odometer reading, your marks, the current target, its settings, the page last shown and the last magnetic declination the compass reported, and nothing leaves the watch. The privacy policy is at https://excelano.com/legal/#peilung.
+Peilung makes no network connection. It reads your location while it is on screen and your step distance while the odometer runs. On each device it keeps the odometer reading, your marks, the current target, its settings, the page last shown and the last magnetic declination the compass reported, and nothing leaves the device. The privacy policy is at https://excelano.com/legal/#peilung.
 
 ## License
 

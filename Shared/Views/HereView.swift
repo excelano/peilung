@@ -58,6 +58,7 @@ struct HereView: View {
         } label: {
             Text(savedName.map { "Saved \($0)" } ?? "Mark")
         }
+        .actionButton()
         .task(id: savedName) {
             guard savedName != nil else { return }
             try? await Task.sleep(for: .seconds(2))
@@ -99,7 +100,7 @@ struct LocationStatusView: View {
 
     var body: some View {
         if location.isDenied {
-            message("On your iPhone, allow Location in Settings > Privacy.")
+            message(Device.allow("Location"))
         } else if let error = location.errorText {
             message(error)
         } else {

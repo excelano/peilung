@@ -5,7 +5,7 @@
 // The values a fork changes to build its own copy of the app.
 
 DEVELOPMENT_TEAM = 9K6W5PMFYP
-// The App Store record's bundle id, carried by the iOS stub that ships the watch app.
+// The App Store record's bundle id, the iPhone app's, which the watch app's extends.
 PEILUNG_CONTAINER_BUNDLE_ID = com.excelano.peilung
 PEILUNG_BUNDLE_ID = $(PEILUNG_CONTAINER_BUNDLE_ID).watchkitapp
 PEILUNG_DISPLAY_NAME = Peilung
