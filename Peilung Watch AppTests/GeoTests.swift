@@ -91,6 +91,12 @@ struct UnitsTests {
         #expect(Units.metric.offset((across: -5, along: 60), accuracy: 5) == "on line · 60 m along ±5 m")
     }
 
+    @Test func gpsDistanceHidesWithinTheAccuracy() {
+        #expect(Units.metric.gpsDistance(4, accuracy: 6) == nil)
+        #expect(Units.metric.gpsDistance(23, accuracy: 6) == "25 m")
+        #expect(Units.imperial.gpsDistance(30, accuracy: 6) == "100 ft")
+    }
+
     @Test func nothingWithinTheAccuracyOfTheStart() {
         #expect(Units.metric.offset((across: 1, along: -2), accuracy: 6) == nil)
         #expect(Units.imperial.offset((across: 3, along: 4), accuracy: 5) == nil)

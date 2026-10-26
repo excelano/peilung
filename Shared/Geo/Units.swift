@@ -55,8 +55,13 @@ enum Units: String, CaseIterable, Identifiable, Codable {
         return side + " · " + progress + " ±" + rough(accuracy)
     }
 
+    /// A distance between two GPS fixes, "40 ft", or nil while it is within the fix's accuracy.
+    func gpsDistance(_ meters: Double, accuracy: Double) -> String? {
+        meters > accuracy ? rough(meters) : nil
+    }
+
     /// To the nearest 5 m or 10 ft, finer than GPS can tell.
-    private func rough(_ meters: Double) -> String {
+    func rough(_ meters: Double) -> String {
         let step = self == .metric ? 5 : 3.048
         return format(meters: max(step, (meters / step).rounded() * step))
     }

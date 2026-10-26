@@ -65,11 +65,12 @@ struct OdometerView: View {
 
     @ViewBuilder
     private var backToStart: some View {
-        if let start = odometer.state.startCoordinate, let here = location.freshLocation() {
+        if let start = odometer.state.startCoordinate, let here = location.freshLocation(),
+           let distance = units.gpsDistance(Coordinate(here.coordinate).distance(to: start), accuracy: here.horizontalAccuracy) {
             Button {
                 navigator.navigate(to: Target(name: "Start", coordinate: start))
             } label: {
-                Label(units.format(meters: Coordinate(here.coordinate).distance(to: start)) + " to start",
+                Label(distance + " to start ±" + units.rough(here.horizontalAccuracy),
                       systemImage: "arrow.uturn.backward")
                     .font(.footnote)
             }
