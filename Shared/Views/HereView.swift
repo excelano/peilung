@@ -24,6 +24,7 @@ struct HereView: View {
     @ViewBuilder
     private func content(at now: Date) -> some View {
         VStack(spacing: 6) {
+            Spacer(minLength: 0)
             if let fix = location.location {
                 let isFresh = !isLuminanceReduced && LocationModel.isFresh(fix.timestamp, at: now)
                 VStack(alignment: .leading, spacing: 6) {
@@ -40,13 +41,14 @@ struct HereView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
+                Spacer(minLength: 0)
                 if !isLuminanceReduced {
-                    Spacer(minLength: 0)
                     markButton(fix)
                         .disabled(!isFresh)
                 }
             } else {
                 LocationStatusView()
+                Spacer(minLength: 0)
             }
         }
     }
