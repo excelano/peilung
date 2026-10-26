@@ -8,23 +8,25 @@
 # description 4,000, apple-review-notes 4,000.
 
 apple-review-notes = """
-Peilung is a navigation app for people on foot: hikers, geocachers and orienteers. All of it runs on Apple Watch. The iPhone side of the upload is only the empty container Apple requires to deliver a watch-only app, so please review Peilung on the watch. Peilung has no login and makes no network connection.
+Peilung is a navigation app for people on foot: hikers, geocachers and orienteers. It is two apps that do the same things, one for iPhone and one for Apple Watch, delivered together in this upload. Each works on its own: the watch app runs without the iPhone nearby, and the iPhone app needs no watch. Peilung has no login and makes no network connection.
 
 PERMISSIONS
-When it first opens, Peilung asks for Motion & Fitness, to read walking distance from the watch's step count for the odometer, and for Location (while using the app), to show coordinates and the distance and direction to a target. Both are used on the watch only. The compass works with both denied; the odometer and the GPS pages then say which permission to allow in the iPhone's Settings.
+When it first opens on either device, Peilung asks for Motion & Fitness, to read walking distance from that device's step count for the odometer, and for Location (while using the app), to show coordinates and the distance and direction to a target. The compass works with both denied; the odometer and the GPS pages then say which permission to allow in Settings.
 
-WHAT TO TRY (all of it works indoors)
-1. Navigate is the first page and opens as a compass. Turn around and the ring and the heading follow.
-2. Tap the button at the top left to take a bearing. Point the watch at something, tap Lock, then Follow. Turn away more than about ten degrees and the watch taps a turn cue; turn back and it taps once and shows On bearing. Tap the bearing's name at the top, then Stop navigating, to return to the compass.
-3. Swipe down to the Odometer and tap Start. Walk a few steps and come back to it; the distance comes from the step count.
-4. On Here, wait for coordinates and tap Mark. On Marks, tap the new mark: Navigate opens on it, and because you are standing at it the watch taps once and shows Near target.
-5. The scope button at the top right of Navigate enters coordinates by hand: the arrows choose a field and the Digital Crown changes it.
-6. A complication opens the app from the watch face.
+WHAT TO TRY ON IPHONE (all of it works indoors)
+1. Navigate is the first tab and opens as a compass. Hold the iPhone flat and turn around; the ring and the heading follow the top of the phone.
+2. Tap the button at the top left to take a bearing. Point the top of the iPhone at something, tap Lock, then Follow. Turn away more than about ten degrees and the phone plays a turn cue; turn back and it taps once and shows On bearing. Tap the bearing's name at the top, then Stop navigating, to return to the compass.
+3. On the Odometer tab, tap Start, walk a few steps carrying the phone, and come back to it; the distance comes from the step count.
+4. On Here, wait for coordinates and tap Mark. On Marks, tap the new mark: Navigate opens on it, and because you are standing at it the phone taps once and shows Near target.
+5. The scope button at the top right of Navigate enters coordinates by hand: tap a digit, then drag it up or down or use the arrow buttons.
+
+ON APPLE WATCH
+The same pages scroll vertically with the Digital Crown, which also dials bearings and coordinates. A complication opens the app from the watch face.
 
 GPS navigation is not allowed in most orienteering competitions, and the app's description says so.
 
 DATA
-Location and step distance are read on the watch while a page needs them, and nothing is sent off it. What Peilung keeps there is its own working state: the odometer, saved marks, the current target and its settings. Privacy policy: https://excelano.com/legal/#peilung. Source code: https://github.com/excelano/peilung.
+Location and step distance are read on the device while a page needs them, and nothing is sent off it. The iPhone and watch apps do not share data with each other. What Peilung keeps on each device is its own working state: the odometer, saved marks, the current target and its settings. Privacy policy: https://excelano.com/legal/#peilung. Source code: https://github.com/excelano/peilung.
 """
 
 [locales."en-us"]
@@ -32,17 +34,17 @@ website = "https://github.com/excelano/peilung"
 support = "https://github.com/excelano/peilung"
 privacy = "https://excelano.com/legal/#peilung"
 description = """
-Peilung puts the navigation kit you would otherwise carry in a pocket onto your wrist: a compass that takes and holds bearings, a way to any point you choose, a distance odometer and your coordinates. It answers the questions you ask on a trail: which way, how far have I come, where am I, and where have I been.
+Peilung is a navigation kit for walking: a compass that takes and holds bearings, a way to any point you choose, a distance odometer and your coordinates. It answers the questions you ask on a trail: which way, how far have I come, where am I, and where have I been. It runs on iPhone and on Apple Watch, and the two apps do the same things, so it can ride on your wrist, in your hand, or both.
 
-Navigate opens as a compass. Take a bearing by pointing the watch at a landmark and locking it, or dial one in with the Digital Crown from a map, then follow it. The watch taps once when you are on bearing, and taps a turn cue when you drift off, so you can watch the ground instead of the screen. When GPS is available it also shows how far you have strayed to the left or right of the line, which a compass alone cannot tell you after you step around a fallen tree. Bearings are magnetic by default, to match an orienteering map, with true north a setting away.
+Navigate opens as a compass. Take a bearing by pointing the top of the iPhone, or the watch, at a landmark and locking it, or dial one in from a map with a drag of your finger or the Digital Crown, then follow it. Peilung taps once when you are on bearing and taps a turn cue when you drift off, so you can watch the ground instead of the screen. When GPS is available it also shows how far you have strayed to the left or right of the line, which a compass alone cannot tell you after you step around a fallen tree. Bearings are magnetic by default, to match an orienteering map, with true north a setting away.
 
-Navigate also takes you to a point: a saved mark, your starting point, or coordinates you enter with the crown. An arrow points the way, the distance counts down, and the watch taps when you arrive.
+Navigate also takes you to a point: a saved mark, your starting point, or coordinates you enter digit by digit. An arrow points the way, the distance counts down, and a tap tells you when you arrive.
 
-The Odometer is a stopwatch for distance. Press Start, walk, and look whenever you like to see how far you have gone, how long it took, and, when GPS was on at Start, how far it is back to where you started. It reads the watch's own step count, so it uses no extra battery between glances and keeps counting if the app is closed.
+The Odometer is a stopwatch for distance. Press Start, walk, and look whenever you like to see how far you have gone, how long it took, and, when GPS was on at Start, how far it is back to where you started. It reads the step count your iPhone or watch already keeps, so it uses no extra battery between glances and keeps counting if the app is closed.
 
 Here shows your position in the degrees-and-minutes form geocachers use, and one tap saves it as a mark to come back to.
 
-Everything Peilung uses is built into the watch: the compass, the GPS and the step counter. It needs no phone signal and no iPhone nearby, so it keeps working after the trail leaves coverage behind. It does not start a workout, so it never interrupts one you are recording. Peilung has no account, no ads and nothing to buy, sends nothing anywhere, and its source code is public under the MIT license.
+Everything Peilung uses is built into the device: the compass, the GPS and the step counter. It needs no phone signal, and the watch app needs no iPhone nearby, so it keeps working after the trail leaves coverage behind. On the watch it does not start a workout, so it never interrupts one you are recording, and a complication opens it from the watch face. Peilung has no account, no ads and nothing to buy, sends nothing anywhere, and its source code is public under the MIT license.
 
 GPS navigation is not allowed in most orienteering competitions; check the rules before using Peilung in one.
 """
@@ -50,5 +52,5 @@ GPS navigation is not allowed in most orienteering competitions; check the rules
 [locales."en-us".apple]
 name = "Peilung"
 subtitle = "Compass, bearing and odometer"
-promotional-text = "Take a bearing and follow it by feel: the watch taps when you're on line and when you drift. Plus point navigation, a distance odometer and your coordinates."
+promotional-text = "Take a bearing and follow it by feel: Peilung taps when you're on line and when you drift. On iPhone and Apple Watch, with point navigation, an odometer and coordinates."
 keywords = "navigation,orienteering,geocaching,hiking,gps,coordinates,distance,waypoint,trail,azimuth,pedometer"
