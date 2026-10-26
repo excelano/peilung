@@ -42,22 +42,22 @@ enum Units: String, CaseIterable, Identifiable, Codable {
     }
 
     /// A position against a bearing line, "15 m left · 220 m along ±10 m", or nil while
-    /// still within the fix's accuracy of the line's start, where GPS cannot place you on it.
-    /// Drift within the accuracy reads as on the line.
-    func offset(_ offset: (across: Double, along: Double), accuracy: Double) -> String? {
-        guard hypot(offset.across, offset.along) > accuracy else { return nil }
-        let side = abs(offset.across) <= accuracy
+    /// still within the GPS margin of the line's start, where GPS cannot place you on it.
+    /// Drift within the margin reads as on the line.
+    func offset(_ offset: (across: Double, along: Double), margin: Double) -> String? {
+        guard hypot(offset.across, offset.along) > margin else { return nil }
+        let side = abs(offset.across) <= margin
             ? "on line"
             : rough(abs(offset.across)) + (offset.across > 0 ? " right" : " left")
         let progress = offset.along < 0
             ? rough(-offset.along) + " behind"
             : rough(offset.along) + " along"
-        return side + " · " + progress + " ±" + rough(accuracy)
+        return side + " · " + progress + " ±" + rough(margin)
     }
 
-    /// A distance between two GPS fixes, "40 ft", or nil while it is within the fix's accuracy.
-    func gpsDistance(_ meters: Double, accuracy: Double) -> String? {
-        meters > accuracy ? rough(meters) : nil
+    /// A distance between two GPS fixes, "40 ft", or nil while it is within the GPS margin.
+    func gpsDistance(_ meters: Double, margin: Double) -> String? {
+        meters > margin ? rough(meters) : nil
     }
 
     /// To the nearest 5 m or 10 ft, finer than GPS can tell.

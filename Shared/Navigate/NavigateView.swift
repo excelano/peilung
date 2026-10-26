@@ -169,7 +169,7 @@ struct NavigateView: View {
                     Image(systemName: "xmark.circle.fill")
                 }
             }
-            .font(.footnote.monospacedDigit())
+            .font(Device.goalTitleFont.monospacedDigit())
             .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
@@ -224,7 +224,7 @@ struct NavigateView: View {
         let fix = location.freshLocation(at: now)
         let offsetText = fix.flatMap { fix in
             line.offset(of: Coordinate(fix.coordinate), declination: location.declination)
-                .flatMap { units.offset($0, accuracy: fix.horizontalAccuracy) }
+                .flatMap { units.offset($0, margin: LocationModel.margin(accuracy: fix.horizontalAccuracy)) }
         }
 
         VStack(spacing: 2) {

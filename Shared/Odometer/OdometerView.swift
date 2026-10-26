@@ -63,16 +63,17 @@ struct OdometerView: View {
     }
 
     /// The straight line back to where Start was pressed, once the step count has gone past
-    /// the fix's accuracy, so GPS wander while standing still never shows as a way back.
+    /// the GPS margin, so GPS wander while standing still never shows as a way back.
     @ViewBuilder
     private var backToStart: some View {
         if let start = odometer.state.startCoordinate, let here = location.freshLocation(),
-           let tracked = odometer.distance, tracked > here.horizontalAccuracy,
-           let distance = units.gpsDistance(Coordinate(here.coordinate).distance(to: start), accuracy: here.horizontalAccuracy) {
+           case let margin = LocationModel.margin(accuracy: here.horizontalAccuracy),
+           let tracked = odometer.distance, tracked > margin,
+           let distance = units.gpsDistance(Coordinate(here.coordinate).distance(to: start), margin: margin) {
             Button {
                 navigator.navigate(to: Target(name: "Start", coordinate: start))
             } label: {
-                Label(distance + " to start ±" + units.rough(here.horizontalAccuracy),
+                Label(distance + " to start ±" + units.rough(margin),
                       systemImage: "arrow.uturn.backward")
                     .font(.footnote)
             }

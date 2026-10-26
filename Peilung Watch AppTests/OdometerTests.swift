@@ -160,9 +160,19 @@ struct OdometerModelTests {
         model.start(from: nil)
         pedometer.handler?(.failure(CocoaError(.featureUnsupported)))
         #expect(model.errorText != nil)
-        pedometer.handler?(.success(10))
+        pedometer.handler?(.success(20))
         #expect(model.errorText == nil)
-        #expect(model.distance == 10)
+        #expect(model.distance == 20)
+    }
+
+    @Test func distanceBelowTheMinimumIsHidden() {
+        let model = OdometerModel(pedometer: pedometer, store: Store(url: url))
+        model.watch()
+        model.start(from: nil)
+        pedometer.handler?(.success(Pedometers.minimumDistance - 1))
+        #expect(model.distance == nil)
+        pedometer.handler?(.success(Pedometers.minimumDistance))
+        #expect(model.distance == Pedometers.minimumDistance)
     }
 
     @Test func lateResultAfterResetIsDropped() async {

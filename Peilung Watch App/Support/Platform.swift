@@ -7,6 +7,8 @@ import SwiftUI
 /// The words and looks that differ between the watch and the iPhone.
 enum Device {
     static let name = "watch"
+    /// The goal's title on Navigate, which also becomes the Stop navigating button.
+    static let goalTitleFont = Font.footnote
 
     /// Where a refused permission is turned back on: the watch app's switches live on the iPhone.
     static func allow(_ permission: String) -> String {

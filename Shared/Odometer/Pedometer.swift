@@ -17,6 +17,14 @@ protocol Pedometer: AnyObject {
 }
 
 enum Pedometers {
+    /// About 20 steps. The pedometer counts arm movement while sitting as a few steps,
+    /// so a distance below this is not shown.
+    static let minimumDistance = 15.0
+
+    static func shown(_ meters: Double?) -> Double? {
+        meters.flatMap { $0 >= minimumDistance ? $0 : nil }
+    }
+
     @MainActor
     static func make() -> Pedometer {
         #if targetEnvironment(simulator)

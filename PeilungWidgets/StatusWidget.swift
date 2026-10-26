@@ -53,8 +53,8 @@ struct StatusProvider: TimelineProvider {
     @MainActor
     private func distance(_ state: WidgetState, at now: Date) async -> Double? {
         guard let start = state.trackingStart else { return nil }
-        if let distance = state.trackedDistance { return distance }
-        return try? await Pedometers.make().distance(from: start, to: state.trackingEnd ?? now)
+        if let distance = state.trackedDistance { return Pedometers.shown(distance) }
+        return Pedometers.shown(try? await Pedometers.make().distance(from: start, to: state.trackingEnd ?? now))
     }
 }
 

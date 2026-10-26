@@ -81,26 +81,31 @@ struct UnitsTests {
     }
 
     @Test func offsetFromALine() {
-        #expect(Units.metric.offset((across: -14.2, along: 220), accuracy: 8) == "15 m left · 220 m along ±10 m")
-        #expect(Units.metric.offset((across: 12, along: -40), accuracy: 5) == "10 m right · 40 m behind ±5 m")
-        #expect(Units.imperial.offset((across: 10, along: 1609.344), accuracy: 6) == "30 ft right · 1.00 mi along ±20 ft")
+        #expect(Units.metric.offset((across: -14.2, along: 220), margin: 8) == "15 m left · 220 m along ±10 m")
+        #expect(Units.metric.offset((across: 12, along: -40), margin: 5) == "10 m right · 40 m behind ±5 m")
+        #expect(Units.imperial.offset((across: 10, along: 1609.344), margin: 6) == "30 ft right · 1.00 mi along ±20 ft")
     }
 
-    @Test func driftWithinTheAccuracyIsOnTheLine() {
-        #expect(Units.metric.offset((across: 4, along: 60), accuracy: 5) == "on line · 60 m along ±5 m")
-        #expect(Units.metric.offset((across: -5, along: 60), accuracy: 5) == "on line · 60 m along ±5 m")
+    @Test func driftWithinTheMarginIsOnTheLine() {
+        #expect(Units.metric.offset((across: 4, along: 60), margin: 5) == "on line · 60 m along ±5 m")
+        #expect(Units.metric.offset((across: -5, along: 60), margin: 5) == "on line · 60 m along ±5 m")
     }
 
-    @Test func gpsDistanceHidesWithinTheAccuracy() {
-        #expect(Units.metric.gpsDistance(4, accuracy: 6) == nil)
-        #expect(Units.metric.gpsDistance(23, accuracy: 6) == "25 m")
-        #expect(Units.imperial.gpsDistance(30, accuracy: 6) == "100 ft")
+    @Test func gpsDistanceHidesWithinTheMargin() {
+        #expect(Units.metric.gpsDistance(4, margin: 6) == nil)
+        #expect(Units.metric.gpsDistance(23, margin: 6) == "25 m")
+        #expect(Units.imperial.gpsDistance(30, margin: 6) == "100 ft")
     }
 
-    @Test func nothingWithinTheAccuracyOfTheStart() {
-        #expect(Units.metric.offset((across: 1, along: -2), accuracy: 6) == nil)
-        #expect(Units.imperial.offset((across: 3, along: 4), accuracy: 5) == nil)
-        #expect(Units.metric.offset((across: 3, along: 5), accuracy: 5) != nil)
+    @MainActor @Test func marginDoublesTheAccuracyWithAFloor() {
+        #expect(LocationModel.margin(accuracy: 3) == 10)
+        #expect(LocationModel.margin(accuracy: 8) == 16)
+    }
+
+    @Test func nothingWithinTheMarginOfTheStart() {
+        #expect(Units.metric.offset((across: 1, along: -2), margin: 6) == nil)
+        #expect(Units.imperial.offset((across: 3, along: 4), margin: 5) == nil)
+        #expect(Units.metric.offset((across: 3, along: 5), margin: 5) != nil)
     }
 
     @Test func labels() {

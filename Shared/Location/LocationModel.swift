@@ -55,6 +55,12 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         now.timeIntervalSince(timestamp) <= freshness
     }
 
+    /// How far apart two fixes must be to mean anything. The reported accuracy is a
+    /// best guess that fixes often wander past, indoors most of all.
+    static func margin(accuracy: Double) -> Double {
+        max(2 * accuracy, 10)
+    }
+
     func start() {
         guard !isSimulated else { return }
         if manager.authorizationStatus == .notDetermined {

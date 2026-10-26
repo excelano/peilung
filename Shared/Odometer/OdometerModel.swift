@@ -37,7 +37,7 @@ final class OdometerModel {
     }
 
     var distance: Double? {
-        state.phase == .stopped ? state.finalDistance : liveDistance
+        Pedometers.shown(state.phase == .stopped ? state.finalDistance : liveDistance)
     }
 
     func start(from coordinate: Coordinate?) {
