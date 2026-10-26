@@ -42,7 +42,7 @@ Navigate also takes you to a point: a saved mark, your starting point, or coordi
 
 The Odometer is a stopwatch for distance. Press Start, walk or run, and look whenever you like to see how far you have gone, how long it took, and, when GPS was on at Start, how far it is back to where you started. It reads the step count your iPhone or watch already keeps, so it uses no extra battery between glances and keeps counting if the app is closed.
 
-Here shows your position in the degrees-and-minutes form geocachers use, and one tap saves it as a mark to come back to.
+Here shows your position in the degrees and decimal minutes geocachers use, or, if you prefer, in degrees, minutes and seconds or in decimal degrees, and one tap saves it as a mark to come back to. Coordinates you enter follow the same setting.
 
 Everything Peilung uses is built into the device: the compass, the GPS and the step counter. It needs no phone signal, and the watch app needs no iPhone nearby, so it keeps working after the trail leaves coverage behind. On the watch it does not start a workout, so it never interrupts one you are recording, and a complication opens it from the watch face while a Smart Stack widget shows where you are heading and how far you have gone. Peilung has no account, no ads and nothing to buy, sends nothing anywhere, and its source code is public under the MIT license.
 

@@ -10,6 +10,7 @@ struct HereView: View {
     @Environment(MarkStore.self) private var marks
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
     @AppStorage(CoordinateFormat.storageKey) private var format = CoordinateFormat.degreesMinutes
+    @AppStorage(Units.storageKey) private var units = Units.localeDefault
     @State private var savedName: String?
 
     var body: some View {
@@ -32,7 +33,7 @@ struct HereView: View {
                     CoordinateText(coordinate: Coordinate(fix.coordinate), format: format)
                         .foregroundStyle(isFresh ? .primary : .secondary)
                     if isFresh {
-                        Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
+                        Text("±" + units.format(meters: fix.horizontalAccuracy))
                             .font(.footnote)
                             .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
                     } else if !isLuminanceReduced {
