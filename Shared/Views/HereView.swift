@@ -9,6 +9,7 @@ struct HereView: View {
     @Environment(LocationModel.self) private var location
     @Environment(MarkStore.self) private var marks
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
+    @AppStorage(CoordinateFormat.storageKey) private var format = CoordinateFormat.degreesMinutes
     @State private var savedName: String?
 
     var body: some View {
@@ -28,7 +29,7 @@ struct HereView: View {
             if let fix = location.location {
                 let isFresh = !isLuminanceReduced && LocationModel.isFresh(fix.timestamp, at: now)
                 VStack(alignment: .leading, spacing: 6) {
-                    CoordinateText(coordinate: Coordinate(fix.coordinate))
+                    CoordinateText(coordinate: Coordinate(fix.coordinate), format: format)
                         .foregroundStyle(isFresh ? .primary : .secondary)
                     if isFresh {
                         Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
@@ -78,15 +79,17 @@ struct HereView: View {
     }
 }
 
-/// Two monospaced DDM lines, the latitude's two-digit degrees padded so the degree
-/// signs line up with the longitude's three.
+/// Two monospaced lines, the latitude's two-digit degrees padded so its digits line up
+/// with the longitude's three.
 struct CoordinateText: View {
     let coordinate: Coordinate
+    let format: CoordinateFormat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            line(coordinate.latitudeText.prefix(1) + " " + coordinate.latitudeText.dropFirst())
-            line(coordinate.longitudeText)
+            let latitude = coordinate.latitudeText(format)
+            line(latitude.prefix(1) + " " + latitude.dropFirst())
+            line(coordinate.longitudeText(format))
         }
     }
 

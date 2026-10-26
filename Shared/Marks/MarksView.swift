@@ -10,6 +10,7 @@ struct MarksView: View {
     @Environment(Navigator.self) private var navigator
     @AppStorage(Units.storageKey) private var units = Units.localeDefault
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
+    @AppStorage(CoordinateFormat.storageKey) private var format = CoordinateFormat.degreesMinutes
     @State private var renaming: Mark?
 
     var body: some View {
@@ -45,6 +46,9 @@ struct MarksView: View {
                 Picker("North", selection: $reference) {
                     ForEach(NorthReference.allCases) { Text($0.label).tag($0) }
                 }
+                Picker("Coordinates", selection: $format) {
+                    ForEach(CoordinateFormat.allCases) { Text($0.label).tag($0) }
+                }
             }
         }
     }
@@ -53,8 +57,8 @@ struct MarksView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(mark.name).font(.headline).lineLimit(1)
             Group {
-                Text(mark.coordinate.latitudeText)
-                Text(mark.coordinate.longitudeText)
+                Text(mark.coordinate.latitudeText(format))
+                Text(mark.coordinate.longitudeText(format))
             }
             .font(.system(.footnote, design: .monospaced))
             HStack {

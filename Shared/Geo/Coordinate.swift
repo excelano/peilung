@@ -17,9 +17,6 @@ struct Coordinate: Codable, Equatable, Sendable {
         self.init(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
 
-    var latitudeText: String { Geocache.format(latitude, isLatitude: true) }
-    var longitudeText: String { Geocache.format(longitude, isLatitude: false) }
-
     /// Meters along the great circle (haversine, mean Earth radius). Core Location's
     /// own distance is not safe to call from several threads at once.
     func distance(to other: Coordinate) -> Double {

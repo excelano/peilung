@@ -17,20 +17,20 @@ struct TargetEntryView: View {
     let onSet: (Coordinate) -> Void
 
     @State private var entry: CoordinateEntry
-    @State private var field = Field.latMinutes
+    @State private var field = CoordinateEntry.firstField
     @State private var crown = 0.0
     @FocusState private var isFocused: Bool
 
-    init(start: Coordinate, onSet: @escaping (Coordinate) -> Void) {
+    init(start: Coordinate, format: CoordinateFormat, onSet: @escaping (Coordinate) -> Void) {
         self.onSet = onSet
-        _entry = State(initialValue: CoordinateEntry(start))
+        _entry = State(initialValue: CoordinateEntry(start, format: format))
     }
 
     var body: some View {
         VStack(spacing: 6) {
             VStack(spacing: 6) {
-                row([.latHemisphere, .latDegrees, .latMinutes, .latHundredths, .latTens, .latOnes])
-                row([.lonHemisphere, .lonDegrees, .lonMinutes, .lonHundredths, .lonTens, .lonOnes])
+                row(entry.row(isLatitude: true))
+                row(entry.row(isLatitude: false))
             }
             .crownInput($crown, focus: $isFocused) { entry.adjust(field, by: $0) }
             Text(entry.offset(from: location.coordinate, units: units, north: North(reference, declination: location.declination)))
@@ -52,7 +52,7 @@ struct TargetEntryView: View {
         HStack(spacing: 0) {
             ForEach(fields, id: \.self) { item in
                 segment(item)
-                Text(item.separator)
+                Text(entry.separator(item))
             }
         }
         .font(.system(size: 22, weight: .semibold, design: .monospaced))
@@ -71,8 +71,8 @@ struct TargetEntryView: View {
     }
 
     private func move(by offset: Int) {
-        let all = Field.allCases
-        field = all[(field.rawValue + offset + all.count) % all.count]
+        let all = entry.fields
+        field = all[((all.firstIndex(of: field) ?? 0) + offset + all.count) % all.count]
         isFocused = true
         Haptics.play(.click)
     }

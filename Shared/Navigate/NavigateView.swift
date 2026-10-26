@@ -12,6 +12,7 @@ struct NavigateView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(Units.storageKey) private var units = Units.localeDefault
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
+    @AppStorage(CoordinateFormat.storageKey) private var format = CoordinateFormat.degreesMinutes
     @State private var entry: Entry?
     @State private var hold = BearingHold()
     @State private var arrival = Arrival()
@@ -53,7 +54,8 @@ struct NavigateView: View {
         .sheet(item: $entry) { kind in
             switch kind {
             case .coordinates:
-                TargetEntryView(start: location.coordinate ?? navigator.goalCoordinate ?? Coordinate(latitude: 0, longitude: 0)) {
+                TargetEntryView(start: location.coordinate ?? navigator.goalCoordinate ?? Coordinate(latitude: 0, longitude: 0),
+                                format: format) {
                     navigator.navigate(to: marks.mark(at: $0).target)
                     entry = nil
                 }
