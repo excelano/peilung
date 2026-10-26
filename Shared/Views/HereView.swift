@@ -19,12 +19,13 @@ struct HereView: View {
     }
 
     /// An old fix stays on screen, dimmed and dated, until a fresh one arrives;
-    /// only a fresh one can be marked.
+    /// only a fresh one can be marked. GPS stops while the screen is dimmed, so the
+    /// dimmed page shows the last fix without a date.
     @ViewBuilder
     private func content(at now: Date) -> some View {
         VStack(spacing: 6) {
             if let fix = location.location {
-                let isFresh = LocationModel.isFresh(fix.timestamp, at: now, dimmed: isLuminanceReduced)
+                let isFresh = !isLuminanceReduced && LocationModel.isFresh(fix.timestamp, at: now)
                 VStack(alignment: .leading, spacing: 6) {
                     CoordinateText(coordinate: Coordinate(fix.coordinate))
                         .foregroundStyle(isFresh ? .primary : .secondary)
@@ -32,7 +33,7 @@ struct HereView: View {
                         Text("±\(Int(fix.horizontalAccuracy.rounded())) m")
                             .font(.footnote)
                             .foregroundStyle(accuracyColor(fix.horizontalAccuracy))
-                    } else {
+                    } else if !isLuminanceReduced {
                         Text("Updating · " + Elapsed.age(now.timeIntervalSince(fix.timestamp)))
                             .font(.footnote)
                             .foregroundStyle(.orange)

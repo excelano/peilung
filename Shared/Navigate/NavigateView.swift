@@ -40,18 +40,7 @@ struct NavigateView: View {
 
     var body: some View {
         Group {
-            switch navigator.goal {
-            case .point(let target):
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    pointGuidance(to: target, at: context.date)
-                }
-            case .bearing(let line):
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    bearingGuidance(along: line, at: context.date)
-                }
-            case nil:
-                compass
-            }
+            if isLuminanceReduced { dimmed } else { live }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -108,13 +97,42 @@ struct NavigateView: View {
         }
     }
 
+    @ViewBuilder
+    private var live: some View {
+        switch navigator.goal {
+        case .point(let target):
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                pointGuidance(to: target, at: context.date)
+            }
+        case .bearing(let line):
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                bearingGuidance(along: line, at: context.date)
+            }
+        case nil:
+            compass
+        }
+    }
+
+    /// The sensors stop while the screen is dimmed, so the page shows the goal and no readings.
+    @ViewBuilder
+    private var dimmed: some View {
+        switch navigator.goal {
+        case .point(let target):
+            goalTitle(target.name)
+        case .bearing(let line):
+            goalTitle("Bearing " + north.text(magnetic: line.magnetic))
+        case nil:
+            Image(systemName: "location.north.circle")
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     /// With nowhere to go, a plain compass: the arrow is where the watch points.
     private var compass: some View {
         VStack(spacing: 2) {
-            if !isLuminanceReduced {
-                CompassView(arrow: nil, north: -(shownHeading ?? 0), marker: .index)
+            CompassView(arrow: nil, north: -(shownHeading ?? 0), marker: .index)
                 .frame(maxHeight: .infinity)
-            }
             Text(location.magneticHeading.map { north.text(magnetic: $0) } ?? "No compass")
                 .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
                 .lineLimit(1)
@@ -171,7 +189,7 @@ struct NavigateView: View {
 
     @ViewBuilder
     private func pointGuidance(to target: Target, at now: Date) -> some View {
-        let here = location.freshLocation(at: now, dimmed: isLuminanceReduced).map { Coordinate($0.coordinate) }
+        let here = location.freshLocation(at: now).map { Coordinate($0.coordinate) }
         let distance = here?.distance(to: target.coordinate)
         let bearing = here?.bearing(to: target.coordinate)
         let isNear = distance.map { $0 < Compass.nearTargetMeters } ?? false
@@ -179,14 +197,12 @@ struct NavigateView: View {
 
         VStack(spacing: 2) {
             goalTitle(target.name)
-            if !isLuminanceReduced {
-                CompassView(
-                    arrow: isNear ? nil : bearing.map { $0 - (trueHeading ?? 0) },
-                    north: -(shownHeading ?? 0),
-                    marker: isNear ? .arrived : .arrow(onCourse: trueHeading != nil && aim.isOn)
-                )
-                .frame(maxHeight: .infinity)
-            }
+            CompassView(
+                arrow: isNear ? nil : bearing.map { $0 - (trueHeading ?? 0) },
+                north: -(shownHeading ?? 0),
+                marker: isNear ? .arrived : .arrow(onCourse: trueHeading != nil && aim.isOn)
+            )
+            .frame(maxHeight: .infinity)
             if let distance, let bearing {
                 Text(isNear ? "Near target" : units.format(meters: distance))
                     .font(.system(.title2, design: .rounded).weight(.semibold).monospacedDigit())
@@ -208,19 +224,17 @@ struct NavigateView: View {
     @ViewBuilder
     private func bearingGuidance(along line: BearingLine, at now: Date) -> some View {
         let deviation = location.magneticHeading.map { Compass.signed(line.magnetic - $0) }
-        let offset = location.freshLocation(at: now, dimmed: isLuminanceReduced)
+        let offset = location.freshLocation(at: now)
             .flatMap { line.offset(of: Coordinate($0.coordinate), declination: location.declination) }
 
         VStack(spacing: 2) {
             goalTitle("Bearing " + north.text(magnetic: line.magnetic))
-            if !isLuminanceReduced {
-                CompassView(
-                    arrow: deviation ?? north.shown(magnetic: line.magnetic),
-                    north: -(shownHeading ?? 0),
-                    marker: .arrow(onCourse: deviation != nil && hold.isOn)
-                )
-                .frame(maxHeight: .infinity)
-            }
+            CompassView(
+                arrow: deviation ?? north.shown(magnetic: line.magnetic),
+                north: -(shownHeading ?? 0),
+                marker: .arrow(onCourse: deviation != nil && hold.isOn)
+            )
+            .frame(maxHeight: .infinity)
             Group {
                 if let deviation {
                     if hold.isOn {

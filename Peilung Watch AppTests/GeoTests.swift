@@ -116,12 +116,6 @@ struct FreshnessTests {
         #expect(LocationModel.isFresh(now.addingTimeInterval(-5), at: now))
         #expect(!LocationModel.isFresh(now.addingTimeInterval(-5.1), at: now))
     }
-
-    @MainActor @Test func dimmedDisplayAllowsAMinuteAndAHalf() {
-        let now = Date.now
-        #expect(LocationModel.isFresh(now.addingTimeInterval(-90), at: now, dimmed: true))
-        #expect(!LocationModel.isFresh(now.addingTimeInterval(-91), at: now, dimmed: true))
-    }
 }
 
 struct TurnTests {

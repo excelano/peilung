@@ -4,8 +4,9 @@
 
 import SwiftUI
 
-/// The pages, and the sensors each one needs: GPS while the app is on screen, the
-/// heading only on Navigate, live pedometer updates only on Odometer.
+/// The pages, and the sensors each one needs: GPS while the screen is up, the heading
+/// only on Navigate, live pedometer updates only on Odometer. A dimmed screen stops them
+/// all, since watchOS can leave the app dimmed in front for hours.
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(LocationModel.self) private var location
@@ -63,7 +64,7 @@ struct RootView: View {
     #endif
 
     private func updateSensors() {
-        guard scenePhase != .background else {
+        guard scenePhase == .active else {
             location.stop()
             odometer.unwatch()
             return

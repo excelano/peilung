@@ -28,7 +28,7 @@ struct OdometerView: View {
     private func reading(at now: Date) -> some View {
         let state = odometer.state
         VStack(spacing: 2) {
-            Text(odometer.distance.map(units.format(meters:)) ?? "—")
+            Text(shownDistance.map(units.format(meters:)) ?? "—")
                 .font(.system(size: 40, weight: .semibold, design: .rounded).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -56,6 +56,11 @@ struct OdometerView: View {
                     .minimumScaleFactor(0.7)
             }
         }
+    }
+
+    /// Live updates stop while the screen is dimmed, so a running count is hidden rather than frozen.
+    private var shownDistance: Double? {
+        odometer.state.phase == .running && isLuminanceReduced ? nil : odometer.distance
     }
 
     @ViewBuilder

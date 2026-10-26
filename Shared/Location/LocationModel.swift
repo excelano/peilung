@@ -5,15 +5,13 @@
 import CoreLocation
 import Observation
 
-/// Position and heading from Core Location. GPS runs only while the app is on screen;
+/// Position and heading from Core Location. GPS runs only while the screen is up;
 /// the heading runs only while the Navigate page is showing.
 @MainActor
 @Observable
 final class LocationModel: NSObject, CLLocationManagerDelegate {
     /// A fix older than this is shown as stale.
     static let freshness: TimeInterval = 5
-    /// The same for the dimmed always-on display, which redraws about once a minute.
-    static let dimmedFreshness: TimeInterval = 90
     static let declinationKey = "declination"
 
     private(set) var location: CLLocation?
@@ -46,15 +44,15 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     var headingAvailable: Bool { CLLocationManager.headingAvailable() }
 
     /// The current fix when it is fresh enough to act on.
-    func freshLocation(at now: Date = .now, dimmed: Bool = false) -> CLLocation? {
-        guard let location, Self.isFresh(location.timestamp, at: now, dimmed: dimmed) else { return nil }
+    func freshLocation(at now: Date = .now) -> CLLocation? {
+        guard let location, Self.isFresh(location.timestamp, at: now) else { return nil }
         return location
     }
 
     var coordinate: Coordinate? { location.map { Coordinate($0.coordinate) } }
 
-    static func isFresh(_ timestamp: Date, at now: Date, dimmed: Bool = false) -> Bool {
-        now.timeIntervalSince(timestamp) <= (dimmed ? dimmedFreshness : freshness)
+    static func isFresh(_ timestamp: Date, at now: Date) -> Bool {
+        now.timeIntervalSince(timestamp) <= freshness
     }
 
     func start() {
