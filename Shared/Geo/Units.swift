@@ -4,7 +4,7 @@
 
 import Foundation
 
-enum Units: String, CaseIterable, Identifiable {
+enum Units: String, CaseIterable, Identifiable, Codable {
     case metric, imperial
 
     var id: Self { self }

@@ -116,12 +116,9 @@ struct NavigateView: View {
     /// The sensors stop while the screen is dimmed, so the page shows the goal and no readings.
     @ViewBuilder
     private var dimmed: some View {
-        switch navigator.goal {
-        case .point(let target):
-            goalTitle(target.name)
-        case .bearing(let line):
-            goalTitle("Bearing " + north.text(magnetic: line.magnetic))
-        case nil:
+        if let goal = navigator.goal {
+            goalTitle(goal.title(north: north))
+        } else {
             Image(systemName: "location.north.circle")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
@@ -228,7 +225,7 @@ struct NavigateView: View {
             .flatMap { line.offset(of: Coordinate($0.coordinate), declination: location.declination) }
 
         VStack(spacing: 2) {
-            goalTitle("Bearing " + north.text(magnetic: line.magnetic))
+            goalTitle(Goal.bearing(line).title(north: north))
             CompassView(
                 arrow: deviation ?? north.shown(magnetic: line.magnetic),
                 north: -(shownHeading ?? 0),

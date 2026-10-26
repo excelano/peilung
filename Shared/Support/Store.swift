@@ -7,6 +7,17 @@ import os
 
 private let log = Logger(subsystem: "com.excelano.peilung", category: "store")
 
+/// The App Group shared by the watch app and its widget.
+enum AppGroup {
+    static let id = "group.com.excelano.peilung"
+
+    /// Application Support inside the group container, so the widget reads what the app writes.
+    static var applicationSupport: URL {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id)?
+            .appending(path: "Library/Application Support") ?? .applicationSupportDirectory
+    }
+}
+
 /// One Codable value kept as a JSON file in Application Support.
 struct Store<Value: Codable> {
     let url: URL
@@ -15,8 +26,7 @@ struct Store<Value: Codable> {
         self.url = url
     }
 
-    init(name: String) {
-        let folder = URL.applicationSupportDirectory
+    init(name: String, in folder: URL = .applicationSupportDirectory) {
         self.init(url: folder.appending(path: "\(name).json"))
     }
 

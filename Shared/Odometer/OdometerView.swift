@@ -35,7 +35,7 @@ struct OdometerView: View {
                 .foregroundStyle(state.phase == .idle ? .secondary : .primary)
             switch state.phase {
             case .idle:
-                Text("Tap Start, then walk.").font(.footnote).foregroundStyle(.secondary)
+                Text("Tap Start to track distance.").font(.footnote).foregroundStyle(.secondary)
             case .running where isLuminanceReduced:
                 if let start = state.startDate {
                     Text("since \(start.formatted(date: .omitted, time: .shortened))")

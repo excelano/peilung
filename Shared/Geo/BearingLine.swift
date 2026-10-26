@@ -26,6 +26,14 @@ struct BearingLine: Codable, Equatable, Sendable {
 enum Goal: Codable, Equatable, Sendable {
     case point(Target)
     case bearing(BearingLine)
+
+    /// The target's name, or "Bearing 054° M".
+    func title(north: North) -> String {
+        switch self {
+        case .point(let target): target.name
+        case .bearing(let line): "Bearing " + north.text(magnetic: line.magnetic)
+        }
+    }
 }
 
 /// Whether the watch is pointing along the bearing, with hysteresis so a reading

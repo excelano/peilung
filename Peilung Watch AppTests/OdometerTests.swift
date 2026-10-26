@@ -226,7 +226,7 @@ struct OdometerModelTests {
         pedometer.isDenied = true
         #expect(model.message(at: .now) == "On your iPhone, allow Motion & Fitness in Settings > Privacy.")
         pedometer.isAvailable = false
-        #expect(model.message(at: .now) == "This watch can't measure walking distance.")
+        #expect(model.message(at: .now) == "This watch can't track distance.")
     }
 
     @Test func stopWhenIdleDoesNothing() {

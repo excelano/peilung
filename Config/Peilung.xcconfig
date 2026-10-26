@@ -9,5 +9,7 @@ DEVELOPMENT_TEAM = 9K6W5PMFYP
 PEILUNG_CONTAINER_BUNDLE_ID = com.excelano.peilung
 PEILUNG_BUNDLE_ID = $(PEILUNG_CONTAINER_BUNDLE_ID).watchkitapp
 PEILUNG_DISPLAY_NAME = Peilung
+// Shared by the watch app and its widget; Shared/Support/Store.swift names it too.
+PEILUNG_APP_GROUP = group.$(PEILUNG_CONTAINER_BUNDLE_ID)
 
 #include "Version.xcconfig"

@@ -3,6 +3,9 @@
 // Built with AI assistance (Claude, Anthropic)
 
 import SwiftUI
+#if os(watchOS)
+import WidgetKit
+#endif
 
 /// The pages, and the sensors each one needs: GPS while the screen is up, the heading
 /// only on Navigate, live pedometer updates only on Odometer. A dimmed screen stops them
@@ -14,6 +17,8 @@ struct RootView: View {
     @Environment(LocationModel.self) private var location
     @Environment(OdometerModel.self) private var odometer
     @Environment(Navigator.self) private var navigator
+    @AppStorage(Units.storageKey) private var units = Units.localeDefault
+    @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
 
     var body: some View {
         pages
@@ -23,6 +28,12 @@ struct RootView: View {
         .onChange(of: scenePhase, initial: true) { updateSensors() }
         .onChange(of: isLuminanceReduced) { updateSensors() }
         .onChange(of: navigator.page) { updateSensors() }
+        #if os(watchOS)
+        .onChange(of: widgetState, initial: true) {
+            WidgetState.store.save(widgetState)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        #endif
         .onChange(of: location.location?.timestamp) {
             if let coordinate = location.freshLocation()?.coordinate {
                 odometer.offerStartFix(Coordinate(coordinate))
@@ -63,6 +74,15 @@ struct RootView: View {
         }
         .tabItem { Label(title, systemImage: systemImage) }
         .tag(page)
+    }
+    #endif
+
+    #if os(watchOS)
+    private var widgetState: WidgetState {
+        let north = North(reference, declination: location.declination)
+        let run = odometer.state
+        return WidgetState(goal: navigator.goal?.title(north: north), trackingStart: run.startDate,
+                           trackingEnd: run.endDate, trackedDistance: run.finalDistance, units: units)
     }
     #endif
 
