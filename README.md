@@ -16,17 +16,17 @@ Bearings are shown against magnetic north by default, because orienteering maps 
 
 GPS-based navigation is not allowed during most orienteering competitions; check an event's rules before using Peilung in one.
 
-**Odometer** is a stopwatch for distance. Press Start where you are, walk, and come back to it whenever you like to see how far you have gone and for how long. The distance comes from the watch's own step count, which it records whether or not Peilung is open, so the odometer costs no battery between glances and survives the app being closed. watchOS turns steps into distance with a stride length it learns from outdoor walks and runs recorded with GPS, as long as Motion Calibration & Distance is on in the iPhone's Location Services, System Services; an outdoor walk in the Workout app calibrates a new watch. When a GPS fix was available at Start, the page also shows the straight-line distance back to where you started, and tapping that line navigates there.
+**Odometer** is a stopwatch for distance. Press Start where you are, walk or run, and come back to it whenever you like to see how far you have gone and for how long. The distance comes from the watch's own step count, which it records whether or not Peilung is open, so the odometer costs no battery between glances and survives the app being closed. watchOS turns steps into distance with a stride length it learns from outdoor walks and runs recorded with GPS, as long as Motion Calibration & Distance is on in the iPhone's Location Services, System Services; an outdoor walk in the Workout app calibrates a new watch. When a GPS fix was available at Start, the page also shows the straight-line distance back to where you started, and tapping that line navigates there.
 
 **Here** shows your position in the degrees-and-decimal-minutes form geocaching uses (`N 29° 45.123  W 095° 22.456`), with its accuracy, and a Mark button that saves it. A position the watch remembered from earlier is shown dimmed with its age until a fresh fix arrives, and only a fresh one can be marked.
 
 **Marks** lists saved points with their age and distance from here. Tap one to navigate to it, swipe to rename or delete it. The units and North settings live at the bottom of this list.
 
-A complication opens Peilung from the watch face, in the circular, corner, rectangular and inline slots.
+A complication opens Peilung from the watch face, in the circular, corner, rectangular and inline slots. The rectangular one, which is also the Smart Stack widget, shows the current goal and the distance tracked since Start, which the watch refreshes about every quarter hour and whenever the app changes either.
 
-**On iPhone** the pages are tabs instead of vertical pages, and the rest follows from holding a phone instead of wearing a watch. The top edge of the iPhone stands in for 12 o'clock, so the compass reads the way the top of the phone points; hold it flat, screen up, in portrait. Where the watch takes the Digital Crown, the iPhone takes a drag up or down on the number or the coordinates, or the buttons below them, and the turn cues play as growing taps for right and fading ones for left. The odometer counts the iPhone's own steps, so it measures a walk only when the phone is carried on it. The complication is the watch's alone.
+**On iPhone** the pages are tabs instead of vertical pages, and the rest follows from holding a phone instead of wearing a watch. The top edge of the iPhone stands in for 12 o'clock, so the compass reads the way the top of the phone points; hold it flat, screen up, in portrait. Where the watch takes the Digital Crown, the iPhone takes a drag up or down on the number or the coordinates, or the buttons below them, and the turn cues play as growing taps for right and fading ones for left. The odometer counts the iPhone's own steps, so it tracks distance only while the phone is carried. The complication is the watch's alone.
 
-GPS runs only while Peilung is on screen, and on the iPhone it stops when the phone locks. Raising the wrist within the watch's Return to Clock time brings it back where you left it, and a fresh fix follows within seconds. That time is two minutes unless changed; setting it to an hour for Peilung alone, under Settings, General, Return to Clock on the watch, keeps the app on the wrist through a walk.
+GPS runs only while Peilung is on screen and the display is not dimmed, and on the iPhone it stops when the phone locks. Raising the wrist within the watch's Return to Clock time brings it back where you left it, and a fresh fix follows within seconds. That time is two minutes unless changed; setting it to an hour for Peilung alone, under Settings, General, Return to Clock on the watch, keeps the app on the wrist through a hike or a run.
 
 ## Building
 
@@ -36,13 +36,13 @@ Both apps compile `Shared`, which holds the models and the four pages. `Peilung`
 
 The identity a fork changes, meaning the team id, the bundle ids and the display name, lives in `Config/Peilung.xcconfig`, and the version in `Config/Version.xcconfig`. The project has no dependencies beyond Apple's frameworks.
 
-The complication is its own extension target, `PeilungWidgets`, embedded in the watch app.
+The complication is its own extension target, `PeilungWidgets`, embedded in the watch app. The two share an App Group, set in `Config/Peilung.xcconfig` and named again in `Shared/Support/Store.swift`, where the app leaves the state the widget shows.
 
 A simulator has no pedometer, so a simulator build walks at a steady pace instead. A Debug build launched with `--demo` and a scene name replaces Core Location with a fixed position and compass and fills in a running odometer, marks and a goal, for screenshots; adding `--entry coordinates` or `--entry bearing` opens that entry sheet. The scenes are listed in `Support/Demo.swift`. A Debug build launched with `--haptics` plays each navigation cue in turn with its name on screen, which is the way to feel them on a device.
 
 ## Privacy
 
-Peilung makes no network connection. It reads your location while it is on screen and your step distance while the odometer runs. On each device it keeps the odometer reading, your marks, the current target, its settings, the page last shown and the last magnetic declination the compass reported, and nothing leaves the device. The privacy policy is at https://excelano.com/legal/#peilung.
+Peilung makes no network connection. It reads your location while it is on screen and not dimmed, and your step distance while the odometer runs. On each device it keeps the odometer reading, your marks, the current target, its settings, the page last shown and the last magnetic declination the compass reported, and nothing leaves the device. The privacy policy is at https://excelano.com/legal/#peilung.
 
 ## License
 
