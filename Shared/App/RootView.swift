@@ -6,9 +6,11 @@ import SwiftUI
 
 /// The pages, and the sensors each one needs: GPS while the screen is up, the heading
 /// only on Navigate, live pedometer updates only on Odometer. A dimmed screen stops them
-/// all, since watchOS can leave the app dimmed in front for hours.
+/// all, since watchOS can leave the app dimmed in front for hours, and on an always-on
+/// watch the dimmed app can stay `.active`.
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isLuminanceReduced) private var isLuminanceReduced
     @Environment(LocationModel.self) private var location
     @Environment(OdometerModel.self) private var odometer
     @Environment(Navigator.self) private var navigator
@@ -19,6 +21,7 @@ struct RootView: View {
         .overlay { if Demo.samplesHaptics { HapticsSampler() } }
         #endif
         .onChange(of: scenePhase, initial: true) { updateSensors() }
+        .onChange(of: isLuminanceReduced) { updateSensors() }
         .onChange(of: navigator.page) { updateSensors() }
         .onChange(of: location.location?.timestamp) {
             if let coordinate = location.freshLocation()?.coordinate {
@@ -64,7 +67,7 @@ struct RootView: View {
     #endif
 
     private func updateSensors() {
-        guard scenePhase == .active else {
+        guard scenePhase == .active, !isLuminanceReduced else {
             location.stop()
             odometer.unwatch()
             return
