@@ -39,7 +39,7 @@ struct HereView: View {
                             .foregroundStyle(.orange)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
                 if !isLuminanceReduced {
                     Spacer(minLength: 0)
                     markButton(fix)
@@ -76,13 +76,14 @@ struct HereView: View {
     }
 }
 
-/// Two monospaced DDM lines.
+/// Two monospaced DDM lines, the latitude's two-digit degrees padded so the degree
+/// signs line up with the longitude's three.
 struct CoordinateText: View {
     let coordinate: Coordinate
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            line(coordinate.latitudeText)
+            line(coordinate.latitudeText.prefix(1) + " " + coordinate.latitudeText.dropFirst())
             line(coordinate.longitudeText)
         }
     }
