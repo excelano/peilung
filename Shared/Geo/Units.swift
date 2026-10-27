@@ -46,13 +46,15 @@ enum Units: String, CaseIterable, Identifiable, Codable {
     /// Drift within the margin reads as on the line.
     func offset(_ offset: (across: Double, along: Double), margin: Double) -> String? {
         guard hypot(offset.across, offset.along) > margin else { return nil }
-        let side = abs(offset.across) <= margin
-            ? "on line"
-            : rough(abs(offset.across)) + (offset.across > 0 ? " right" : " left")
-        let progress = offset.along < 0
-            ? rough(-offset.along) + " behind"
-            : rough(offset.along) + " along"
-        return side + " · " + progress + " ±" + rough(margin)
+        return side(abs(offset.across) <= margin ? 0 : offset.across) + " · " + progress(offset.along) + " ±" + rough(margin)
+    }
+
+    func side(_ across: Double) -> String {
+        across == 0 ? "on line" : rough(abs(across)) + (across > 0 ? " right" : " left")
+    }
+
+    func progress(_ along: Double) -> String {
+        along < 0 ? rough(-along) + " behind" : rough(along) + " along"
     }
 
     /// A distance between two GPS fixes, "40 ft", or nil while it is within the GPS margin.

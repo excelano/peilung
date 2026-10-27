@@ -8,6 +8,7 @@ import Foundation
 /// titles it, and the odometer's run, whose distance the widget asks the pedometer for.
 struct WidgetState: Codable, Equatable {
     var goal: String?
+    var reading: Reading?
     var trackingStart: Date?
     var trackingEnd: Date?
     /// The distance at Stop, once the pedometer has settled it.
@@ -17,4 +18,14 @@ struct WidgetState: Codable, Equatable {
     var isTracking: Bool { trackingStart != nil && trackingEnd == nil }
 
     static var store: Store<WidgetState> { Store(name: "widget", in: AppGroup.applicationSupport) }
+
+    struct Reading: Codable, Equatable {
+        enum Kind: Codable, Equatable {
+            case line(across: Double, along: Double)
+            case point(distance: Double, bearing: String)
+        }
+
+        var kind: Kind
+        var date: Date
+    }
 }

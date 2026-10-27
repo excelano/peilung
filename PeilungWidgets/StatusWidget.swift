@@ -15,7 +15,9 @@ struct PeilungWidgets: WidgetBundle {
 struct StatusEntry: TimelineEntry {
     let date: Date
     var goal: String?
+    var reading: WidgetState.Reading?
     var distance: String?
+    var units = Units.localeDefault
 }
 
 /// Reads what the watch app left in the App Group; a running odometer's distance comes
@@ -47,7 +49,8 @@ struct StatusProvider: TimelineProvider {
     @MainActor
     private func entry(_ state: WidgetState?, at now: Date) async -> StatusEntry {
         guard let state else { return StatusEntry(date: now) }
-        return StatusEntry(date: now, goal: state.goal, distance: await distance(state, at: now).map(state.units.format(meters:)))
+        return StatusEntry(date: now, goal: state.goal, reading: state.goal == nil ? nil : state.reading,
+                           distance: await distance(state, at: now).map(state.units.format(meters:)), units: state.units)
     }
 
     @MainActor
@@ -65,7 +68,7 @@ struct StatusWidget: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Peilung")
-        .description("Where you are navigating to, and the distance tracked.")
+        .description("Where you are navigating to, where you stood against it, and the distance tracked.")
         .supportedFamilies([.accessoryCircular, .accessoryCorner, .accessoryRectangular, .accessoryInline])
     }
 }
@@ -80,30 +83,42 @@ struct StatusWidgetView: View {
     var body: some View {
         switch family {
         case .accessoryCorner:
-            Image(systemName: Self.symbol)
-                .font(.title2)
-                .foregroundStyle(Self.amber)
-                .widgetLabel("Peilung")
+            if let label = shortText ?? entry.distance {
+                symbolImage.font(.title2).widgetLabel(label)
+            } else {
+                symbolImage.font(.title2)
+            }
         case .accessoryRectangular:
             VStack(alignment: .leading) {
-                Label("Peilung", systemImage: Self.symbol)
-                    .font(.headline)
-                    .foregroundStyle(Self.amber)
-                if entry.goal == nil && entry.distance == nil {
-                    Text("Not navigating or tracking distance")
-                } else {
-                    if let goal = entry.goal {
-                        Text(goal).lineLimit(1)
-                    }
-                    if let distance = entry.distance {
-                        Text(distance + " tracked")
-                    }
+                if let goal = entry.goal {
+                    Text(goal)
+                        .font(.headline)
+                        .foregroundStyle(Self.amber)
+                        .lineLimit(1)
+                }
+                if let reading = entry.reading {
+                    Text(longText(reading))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text("\(Text(reading.date, style: .relative)) ago")
+                        .foregroundStyle(.secondary)
+                } else if entry.goal == nil && entry.distance == nil {
+                    Label("Not navigating or tracking distance", systemImage: Self.symbol)
+                }
+                if let distance = entry.distance, entry.reading == nil {
+                    Text(distance + " tracked")
                 }
             }
             .font(.footnote)
             .frame(maxWidth: .infinity, alignment: .leading)
         case .accessoryInline:
-            Label("Peilung", systemImage: Self.symbol)
+            if let reading = entry.reading, let shortText {
+                Text("\(Image(systemName: symbol(reading))) \(shortText), \(Text(reading.date, style: .relative)) ago")
+            } else if let text = entry.goal ?? entry.distance.map({ $0 + " tracked" }) {
+                Label(text, systemImage: Self.symbol)
+            } else {
+                Image(systemName: Self.symbol)
+            }
         default:
             ZStack {
                 if renderingMode == .fullColor {
@@ -111,10 +126,55 @@ struct StatusWidgetView: View {
                 } else {
                     AccessoryWidgetBackground()
                 }
-                Image(systemName: Self.symbol)
-                    .font(.title3)
-                    .foregroundStyle(renderingMode == .fullColor ? Self.amber : .primary)
+                if let reading = entry.reading {
+                    VStack(spacing: 0) {
+                        symbolImage.font(.body)
+                        if let amount = amount(reading) {
+                            Text(amount)
+                                .font(.caption2.monospacedDigit())
+                                .minimumScaleFactor(0.6)
+                        }
+                    }
+                    .padding(4)
+                } else {
+                    symbolImage.font(.title3)
+                }
             }
+        }
+    }
+
+    private var symbolImage: some View {
+        Image(systemName: entry.reading.map(symbol) ?? Self.symbol)
+            .foregroundStyle(renderingMode == .fullColor ? Self.amber : .primary)
+    }
+
+    private func symbol(_ reading: WidgetState.Reading) -> String {
+        switch reading.kind {
+        case .line(let across, _): across == 0 ? "checkmark" : across > 0 ? "arrow.right" : "arrow.left"
+        case .point: "scope"
+        }
+    }
+
+    private func amount(_ reading: WidgetState.Reading) -> String? {
+        switch reading.kind {
+        case .line(let across, _): across == 0 ? nil : entry.units.rough(abs(across))
+        case .point(let distance, _): entry.units.format(meters: distance)
+        }
+    }
+
+    private var shortText: String? {
+        entry.reading.map { reading in
+            switch reading.kind {
+            case .line(let across, _): entry.units.side(across)
+            case .point(let distance, _): entry.units.format(meters: distance)
+            }
+        }
+    }
+
+    private func longText(_ reading: WidgetState.Reading) -> String {
+        switch reading.kind {
+        case .line(let across, let along): entry.units.side(across) + " · " + entry.units.progress(along)
+        case .point(let distance, let bearing): entry.units.format(meters: distance) + " · " + bearing
         }
     }
 
