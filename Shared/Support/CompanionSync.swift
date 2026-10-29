@@ -15,6 +15,7 @@ private enum ContextKey {
     static let odometer = "odometer"
     static let odometerChanged = "odometerChanged"
     static let marks = "marks"
+    static let declination = "declination"
 }
 
 private struct Received: Sendable {
@@ -22,6 +23,7 @@ private struct Received: Sendable {
     var settings: ([String: String], Date)?
     var odometer: (OdometerState, Date)?
     var marks: MarkStore.Contents?
+    var declination: LearnedDeclination?
 }
 
 @MainActor
@@ -30,14 +32,16 @@ final class CompanionSync: NSObject, WCSessionDelegate {
     static let settingsChangedKey = "settingsChanged"
 
     private let navigator: Navigator
+    private let location: LocationModel
     private let odometer: OdometerModel
     private let marks: MarkStore
     private let defaults: UserDefaults
     private var settings: [String: String]
     private var settingsChanged: Date?
 
-    init(navigator: Navigator, odometer: OdometerModel, marks: MarkStore, defaults: UserDefaults = .standard) {
+    init(navigator: Navigator, location: LocationModel, odometer: OdometerModel, marks: MarkStore, defaults: UserDefaults = .standard) {
         self.navigator = navigator
+        self.location = location
         self.odometer = odometer
         self.marks = marks
         self.defaults = defaults
@@ -50,6 +54,7 @@ final class CompanionSync: NSObject, WCSessionDelegate {
         navigator.onChange = { [weak self] in self?.send() }
         odometer.onChange = { [weak self] in self?.send() }
         marks.onChange = { [weak self] in self?.send() }
+        location.onLearn = { [weak self] in self?.send() }
         _ = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: defaults,
                                                    queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.settingsDidChange() }
@@ -91,6 +96,9 @@ final class CompanionSync: NSObject, WCSessionDelegate {
         if let (run, changed) = received.odometer {
             odometer.receive(run, changed: changed)
         }
+        if let declination = received.declination {
+            location.receive(declination)
+        }
         if let contents = received.marks, marks.receive(contents) {
             send()
         }
@@ -115,6 +123,9 @@ final class CompanionSync: NSObject, WCSessionDelegate {
             context[ContextKey.odometer] = try? JSONEncoder().encode(odometer.run)
         }
         context[ContextKey.marks] = try? JSONEncoder().encode(marks.contents)
+        if let declination = location.savedDeclination {
+            context[ContextKey.declination] = try? JSONEncoder().encode(declination)
+        }
         do {
             try session.updateApplicationContext(context)
         } catch {
@@ -139,6 +150,9 @@ final class CompanionSync: NSObject, WCSessionDelegate {
            let data = context[ContextKey.odometer] as? Data,
            let run = try? JSONDecoder().decode(OdometerState.self, from: data) {
             received.odometer = (run, changed)
+        }
+        if let data = context[ContextKey.declination] as? Data {
+            received.declination = try? JSONDecoder().decode(LearnedDeclination.self, from: data)
         }
         if let data = context[ContextKey.marks] as? Data {
             received.marks = try? JSONDecoder().decode(MarkStore.Contents.self, from: data)

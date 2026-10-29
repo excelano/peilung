@@ -13,13 +13,22 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     /// A fix older than this is shown as stale.
     static let freshness: TimeInterval = 5
     static let declinationKey = "declination"
+    static let declinationLearnedKey = "declinationLearned"
+    static let declinationOriginKey = "declinationOrigin"
 
     private(set) var location: CLLocation?
     /// Degrees clockwise from magnetic north, which the compass reads with or without a fix.
     private(set) var magneticHeading: Double?
     /// True minus magnetic north, learned once the compass has a fix and remembered,
     /// since it changes little over hundreds of kilometers.
-    private(set) var declination: Double?
+    var declination: Double? {
+        guard let learnedDeclination else { return nil }
+        if let origin = declinationOrigin, let here = coordinate,
+           here.distance(to: origin) > LearnedDeclination.range { return nil }
+        return learnedDeclination
+    }
+    private var learnedDeclination: Double?
+    private var declinationOrigin: Coordinate?
     /// The compass's own error estimate, in degrees.
     private(set) var headingAccuracy: Double?
     private(set) var status: CLAuthorizationStatus = .notDetermined
@@ -28,10 +37,12 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
     @ObservationIgnored private let manager = CLLocationManager()
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isSimulated = false
+    @ObservationIgnored var onLearn: (() -> Void)?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        declination = defaults.object(forKey: Self.declinationKey) as? Double
+        learnedDeclination = defaults.object(forKey: Self.declinationKey) as? Double
+        declinationOrigin = Self.declinationOrigin(in: defaults)
         super.init()
         status = manager.authorizationStatus
         manager.delegate = self
@@ -93,12 +104,36 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         magneticHeading = magnetic
         headingAccuracy = accuracy
         guard trueHeading >= 0 else { return }
-        let learned = Compass.signed(trueHeading - magnetic)
-        declination = learned
-        let saved = defaults.object(forKey: Self.declinationKey) as? Double
-        if saved.map({ abs($0 - learned) >= 0.1 }) ?? true {
-            defaults.set(learned, forKey: Self.declinationKey)
+        let learned = LearnedDeclination(degrees: Compass.signed(trueHeading - magnetic), date: .now, origin: coordinate)
+        learnedDeclination = learned.degrees
+        declinationOrigin = learned.origin
+        if savedDeclination.map({ $0.isSuperseded(by: learned) }) ?? true {
+            save(learned)
+            onLearn?()
         }
+    }
+
+    var savedDeclination: LearnedDeclination? {
+        guard let degrees = defaults.object(forKey: Self.declinationKey) as? Double,
+              let date = defaults.object(forKey: Self.declinationLearnedKey) as? Date else { return nil }
+        return LearnedDeclination(degrees: degrees, date: date, origin: Self.declinationOrigin(in: defaults))
+    }
+
+    func receive(_ received: LearnedDeclination) {
+        guard received.date > savedDeclination?.date ?? .distantPast else { return }
+        learnedDeclination = received.degrees
+        declinationOrigin = received.origin
+        save(received)
+    }
+
+    private func save(_ learned: LearnedDeclination) {
+        defaults.set(learned.degrees, forKey: Self.declinationKey)
+        defaults.set(learned.date, forKey: Self.declinationLearnedKey)
+        defaults.set(learned.origin.flatMap { try? JSONEncoder().encode($0) }, forKey: Self.declinationOriginKey)
+    }
+
+    private static func declinationOrigin(in defaults: UserDefaults) -> Coordinate? {
+        defaults.data(forKey: Self.declinationOriginKey).flatMap { try? JSONDecoder().decode(Coordinate.self, from: $0) }
     }
 
     /// Core Location keeps trying after a passing failure, and a refusal shows through
@@ -119,7 +154,7 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         status = .authorizedWhenInUse
         self.location = location
         self.magneticHeading = magneticHeading
-        self.declination = declination
+        learnedDeclination = declination
         headingAccuracy = accuracy
     }
     #endif
@@ -156,5 +191,20 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         MainActor.assumeIsolated {
             receiveError(error)
         }
+    }
+}
+
+struct LearnedDeclination: Codable, Equatable, Sendable {
+    static let range = 100_000.0
+
+    var degrees: Double
+    var date: Date
+    var origin: Coordinate?
+
+    func isSuperseded(by learned: LearnedDeclination) -> Bool {
+        guard abs(degrees - learned.degrees) < 0.1 else { return true }
+        guard let learnedOrigin = learned.origin else { return false }
+        guard let origin else { return true }
+        return learnedOrigin.distance(to: origin) > Self.range / 10
     }
 }

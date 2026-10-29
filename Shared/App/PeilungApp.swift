@@ -30,7 +30,7 @@ struct PeilungApp: App {
         _odometer = State(initialValue: odometer)
         _marks = State(initialValue: marks)
         _navigator = State(initialValue: navigator)
-        let sync = CompanionSync(navigator: navigator, odometer: odometer, marks: marks)
+        let sync = CompanionSync(navigator: navigator, location: location, odometer: odometer, marks: marks)
         _sync = State(initialValue: sync)
         #if DEBUG
         if let demoPage {

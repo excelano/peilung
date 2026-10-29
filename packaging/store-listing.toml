@@ -26,7 +26,7 @@ The same pages scroll vertically with the Digital Crown, which also dials bearin
 GPS navigation is not allowed in most orienteering competitions, and the app's description says so.
 
 DATA
-Location and step distance are read on the device while a page needs them, and nothing is sent to any server. The iPhone and watch apps share the current navigation goal, the marks, the odometer's start and stop times and start point, and the settings with each other over Watch Connectivity. Step counts stay on the device that counted them. Privacy policy: https://excelano.com/legal/#peilung. Source code: https://github.com/excelano/peilung.
+Location and step distance are read on the device while a page needs them, and nothing is sent to any server. The iPhone and watch apps share the current navigation goal, the marks, the odometer's start and stop times and start point, the settings and the learned magnetic declination with each other over Watch Connectivity. Step counts stay on the device that counted them. Privacy policy: https://excelano.com/legal/#peilung. Source code: https://github.com/excelano/peilung.
 """
 
 [locales."en-us"]
