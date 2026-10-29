@@ -14,11 +14,14 @@ enum Page: String, Hashable {
 @Observable
 final class Navigator {
     static let pageKey = "page"
+    static let goalChangedKey = "goalChanged"
 
     var page: Page {
         didSet { defaults.set(page.rawValue, forKey: Self.pageKey) }
     }
     private(set) var goal: Goal?
+    @ObservationIgnored private(set) var goalChanged: Date?
+    @ObservationIgnored var onChange: (() -> Void)?
 
     @ObservationIgnored private let store: Store<Goal>
     @ObservationIgnored private let defaults: UserDefaults
@@ -28,6 +31,7 @@ final class Navigator {
         self.defaults = defaults
         page = defaults.string(forKey: Self.pageKey).flatMap(Page.init) ?? .navigate
         goal = store.load()
+        goalChanged = defaults.object(forKey: Self.goalChangedKey) as? Date
     }
 
     func navigate(to target: Target) {
@@ -39,13 +43,26 @@ final class Navigator {
     }
 
     func clear() {
-        goal = nil
-        store.save(nil)
+        update(nil, changed: .now)
+        onChange?()
+    }
+
+    func receive(_ goal: Goal?, changed: Date) {
+        guard changed > goalChanged ?? .distantPast else { return }
+        update(goal, changed: changed)
+        if goal != nil { page = .navigate }
     }
 
     private func set(_ goal: Goal) {
-        self.goal = goal
-        store.save(goal)
+        update(goal, changed: .now)
         page = .navigate
+        onChange?()
+    }
+
+    private func update(_ goal: Goal?, changed: Date) {
+        self.goal = goal
+        goalChanged = changed
+        store.save(goal)
+        defaults.set(changed, forKey: Self.goalChangedKey)
     }
 }

@@ -10,6 +10,7 @@ struct PeilungApp: App {
     @State private var odometer: OdometerModel
     @State private var marks: MarkStore
     @State private var navigator: Navigator
+    @State private var sync: CompanionSync
 
     init() {
         let odometerStore = Store<OdometerState>(name: "odometer")
@@ -27,11 +28,15 @@ struct PeilungApp: App {
         _odometer = State(initialValue: OdometerModel(pedometer: Pedometers.make(), store: odometerStore))
         _marks = State(initialValue: MarkStore(store: markStore))
         _navigator = State(initialValue: navigator)
+        let sync = CompanionSync(navigator: navigator)
+        _sync = State(initialValue: sync)
         #if DEBUG
         if let demoPage {
             Demo.apply(location: location, navigator: navigator, page: demoPage)
+            return
         }
         #endif
+        sync.start()
     }
 
     var body: some Scene {
