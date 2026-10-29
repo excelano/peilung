@@ -203,6 +203,52 @@ struct NavigatorTests {
         #expect(navigator.goal == nil)
         #expect(Navigator(store: Store(url: url), defaults: defaults).goal == nil)
     }
+
+    @Test func localChangesAreTimedAndAnnounced() {
+        let url = temporaryURL()
+        let navigator = Navigator(store: Store(url: url), defaults: defaults)
+        var announced = 0
+        navigator.onChange = { announced += 1 }
+        navigator.follow(BearingLine(magnetic: 90, origin: nil))
+        let followed = navigator.goalChanged
+        navigator.clear()
+        #expect(announced == 2)
+        #expect(followed != nil)
+        #expect(navigator.goalChanged ?? .distantPast >= followed ?? .distantFuture)
+        #expect(Navigator(store: Store(url: url), defaults: defaults).goalChanged == navigator.goalChanged)
+    }
+
+    @Test func aNewerReceivedGoalWinsAndOpensNavigate() {
+        let url = temporaryURL()
+        let navigator = Navigator(store: Store(url: url), defaults: defaults)
+        navigator.follow(BearingLine(magnetic: 90, origin: nil))
+        navigator.page = .marks
+        var announced = false
+        navigator.onChange = { announced = true }
+        let car = Goal.point(Target(name: "Car", coordinate: Coordinate(latitude: 29.75, longitude: -95.37)))
+        navigator.receive(car, changed: .now + 1)
+        #expect(navigator.goal == car)
+        #expect(navigator.page == .navigate)
+        #expect(!announced)
+        #expect(Navigator(store: Store(url: url), defaults: defaults).goal == car)
+    }
+
+    @Test func anOlderReceivedGoalIsIgnored() {
+        let navigator = Navigator(store: Store(url: temporaryURL()), defaults: defaults)
+        let line = Goal.bearing(BearingLine(magnetic: 90, origin: nil))
+        navigator.follow(BearingLine(magnetic: 90, origin: nil))
+        navigator.receive(nil, changed: .now - 60)
+        #expect(navigator.goal == line)
+    }
+
+    @Test func aReceivedStopKeepsThePage() {
+        let navigator = Navigator(store: Store(url: temporaryURL()), defaults: defaults)
+        navigator.follow(BearingLine(magnetic: 90, origin: nil))
+        navigator.page = .odometer
+        navigator.receive(nil, changed: .now + 1)
+        #expect(navigator.goal == nil)
+        #expect(navigator.page == .odometer)
+    }
 }
 
 struct ArrivalTests {
