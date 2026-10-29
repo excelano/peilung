@@ -265,6 +265,140 @@ func waitUntil(_ condition: () -> Bool) async {
 }
 
 @MainActor
+struct OdometerSyncTests {
+    let pedometer = FakePedometer()
+    let url = temporaryURL()
+    let defaults = UserDefaults(suiteName: "OdometerSyncTests-\(UUID().uuidString)")!
+
+    private func model() -> OdometerModel {
+        OdometerModel(pedometer: pedometer, store: Store(url: url), defaults: defaults)
+    }
+
+    @Test func localChangesAreTimedAndAnnouncedWithoutTheDistance() {
+        let model = model()
+        var announced = 0
+        model.onChange = { announced += 1 }
+        model.start(from: nil)
+        pedometer.handler?(.success(120))
+        model.stop()
+        #expect(announced == 2)
+        #expect(model.changed != nil)
+        #expect(model.run.finalDistance == nil)
+        #expect(model.run.endDate == model.state.endDate)
+    }
+
+    @Test func aRunStoppedElsewhereSettlesThisDevicesOwnSteps() async {
+        let model = model()
+        model.start(from: nil)
+        var run = model.run
+        run.stop(at: .now)
+        pedometer.queried = 300
+        model.receive(run, changed: .now + 1)
+        #expect(model.state.phase == .stopped)
+        await Task.yield()
+        await Task.yield()
+        #expect(model.distance == 300)
+    }
+
+    @Test func aRunStartedElsewhereFollowsLive() {
+        let model = model()
+        model.watch()
+        var run = OdometerState()
+        run.start(at: .now - 60, from: nil)
+        model.receive(run, changed: .now)
+        #expect(model.state.phase == .running)
+        pedometer.handler?(.success(50))
+        #expect(model.distance == 50)
+    }
+
+    @Test func anOlderRunIsIgnored() {
+        let model = model()
+        model.start(from: nil)
+        model.receive(OdometerState(), changed: .now - 60)
+        #expect(model.state.phase == .running)
+    }
+
+    @Test func theChangeTimePersists() {
+        let model = model()
+        model.start(from: nil)
+        #expect(self.model().changed == model.changed)
+    }
+}
+
+@MainActor
+struct MarkSyncTests {
+    let here = Coordinate(latitude: 29.75, longitude: -95.37)
+    let t0 = Date.now - 3600
+
+    private func contents(_ marks: [Mark], deleted: [Mark.ID: Date] = [:]) -> MarkStore.Contents {
+        var contents = MarkStore.Contents()
+        contents.marks = marks
+        contents.deleted = deleted
+        return contents
+    }
+
+    @Test func marksFromBothDevicesSurviveNewestFirst() {
+        let older = Mark(name: "Car", coordinate: here, date: t0)
+        let newer = Mark(name: "Bench", coordinate: here, date: t0 + 60)
+        let merged = contents([older]).merged(with: contents([newer]))
+        #expect(merged.marks == [newer, older])
+    }
+
+    @Test func theLaterRenameWins() {
+        let mark = Mark(name: "Mark 1", coordinate: here, date: t0)
+        var renamed = mark
+        renamed.name = "Car"
+        renamed.changed = t0 + 60
+        #expect(contents([mark]).merged(with: contents([renamed])).marks == [renamed])
+        #expect(contents([renamed]).merged(with: contents([mark])).marks == [renamed])
+    }
+
+    @Test func aDeletionCarriesOverUnlessTheMarkChangedSince() {
+        let mark = Mark(name: "Car", coordinate: here, date: t0)
+        let deletion = contents([], deleted: [mark.id: t0 + 60])
+        #expect(contents([mark]).merged(with: deletion).marks.isEmpty)
+        var renamedLater = mark
+        renamedLater.changed = t0 + 120
+        #expect(contents([renamedLater]).merged(with: deletion).marks == [renamedLater])
+    }
+
+    @Test func oldDeletionsAreForgotten() {
+        let id = UUID()
+        let deletion = contents([], deleted: [id: t0])
+        let later = t0 + MarkStore.Contents.deletionMemory + 1
+        #expect(deletion.merged(with: MarkStore.Contents(), at: later).deleted.isEmpty)
+    }
+
+    @Test func receiveSaysWhetherTheOtherDeviceIsMissingSomething() {
+        let store = MarkStore(store: Store(url: temporaryURL()))
+        let mine = store.add(here)
+        let theirs = Mark(name: "Car", coordinate: here, date: t0)
+        #expect(store.receive(contents([theirs])))
+        #expect(store.marks.map(\.id) == [mine.id, theirs.id])
+        #expect(!store.receive(store.contents))
+    }
+
+    @Test func localChangesAreAnnounced() {
+        let store = MarkStore(store: Store(url: temporaryURL()))
+        var announced = 0
+        store.onChange = { announced += 1 }
+        let mark = store.add(here)
+        store.rename(mark.id, to: "Car")
+        store.delete(mark.id)
+        #expect(announced == 3)
+        #expect(store.contents.deleted[mark.id] != nil)
+    }
+
+    @Test func aFileWithoutDeletionsStillLoads() throws {
+        let url = temporaryURL()
+        let mark = Mark(name: "Car", coordinate: here, date: t0)
+        let json = try JSONEncoder().encode(["marks": [mark]])
+        try json.write(to: url)
+        #expect(MarkStore(store: Store(url: url)).marks == [mark])
+    }
+}
+
+@MainActor
 struct MarkStoreTests {
     let url = temporaryURL()
     let here = Coordinate(latitude: 29.75, longitude: -95.37)

@@ -8,6 +8,8 @@ import Observation
 @MainActor
 @Observable
 final class OdometerModel {
+    static let changedKey = "odometerChanged"
+
     private(set) var state: OdometerState
     /// Meters walked since Start, while running; nil until the pedometer first answers.
     private(set) var liveDistance: Double?
@@ -15,12 +17,23 @@ final class OdometerModel {
 
     @ObservationIgnored private let pedometer: Pedometer
     @ObservationIgnored private let store: Store<OdometerState>
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var isWatching = false
+    @ObservationIgnored private(set) var changed: Date?
+    @ObservationIgnored var onChange: (() -> Void)?
 
-    init(pedometer: Pedometer, store: Store<OdometerState>) {
+    init(pedometer: Pedometer, store: Store<OdometerState>, defaults: UserDefaults = .standard) {
         self.pedometer = pedometer
         self.store = store
+        self.defaults = defaults
         state = store.load() ?? OdometerState()
+        changed = defaults.object(forKey: Self.changedKey) as? Date
+    }
+
+    var run: OdometerState {
+        var run = state
+        run.finalDistance = nil
+        return run
     }
 
     var isAvailable: Bool { pedometer.isAvailable }
@@ -45,6 +58,7 @@ final class OdometerModel {
         liveDistance = 0
         errorText = nil
         save()
+        announce()
         if isWatching { beginUpdates() }
     }
 
@@ -54,6 +68,7 @@ final class OdometerModel {
         state.stop(at: end)
         state.finalDistance = liveDistance
         save()
+        announce()
         pedometer.stopUpdates()
         Task { await settle(from: startDate, to: end) }
     }
@@ -64,12 +79,38 @@ final class OdometerModel {
         liveDistance = nil
         errorText = nil
         save()
+        announce()
     }
 
     func offerStartFix(_ coordinate: Coordinate) {
         let before = state
         state.offerStartFix(coordinate, at: .now)
-        if state != before { save() }
+        if state != before {
+            save()
+            announce()
+        }
+    }
+
+    func receive(_ run: OdometerState, changed: Date) {
+        guard changed > self.changed ?? .distantPast else { return }
+        let before = state
+        state.adopt(run)
+        record(changed)
+        save()
+        guard state.startDate != before.startDate || state.endDate != before.endDate else { return }
+        errorText = nil
+        pedometer.stopUpdates()
+        switch state.phase {
+        case .running:
+            if state.startDate != before.startDate { liveDistance = 0 }
+            if isWatching { beginUpdates() }
+        case .stopped:
+            if let start = state.startDate, let end = state.endDate {
+                Task { await settle(from: start, to: end) }
+            }
+        case .idle:
+            liveDistance = nil
+        }
     }
 
     /// The Odometer page is showing: follow the pedometer live, or retry a stopped
@@ -123,5 +164,15 @@ final class OdometerModel {
 
     private func save() {
         store.save(state)
+    }
+
+    private func announce() {
+        record(.now)
+        onChange?()
+    }
+
+    private func record(_ changed: Date) {
+        self.changed = changed
+        defaults.set(changed, forKey: Self.changedKey)
     }
 }

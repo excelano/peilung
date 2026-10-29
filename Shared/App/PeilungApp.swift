@@ -25,10 +25,12 @@ struct PeilungApp: App {
         let location = LocationModel()
         let navigator = Navigator(store: goalStore)
         _location = State(initialValue: location)
-        _odometer = State(initialValue: OdometerModel(pedometer: Pedometers.make(), store: odometerStore))
-        _marks = State(initialValue: MarkStore(store: markStore))
+        let odometer = OdometerModel(pedometer: Pedometers.make(), store: odometerStore)
+        let marks = MarkStore(store: markStore)
+        _odometer = State(initialValue: odometer)
+        _marks = State(initialValue: marks)
         _navigator = State(initialValue: navigator)
-        let sync = CompanionSync(navigator: navigator)
+        let sync = CompanionSync(navigator: navigator, odometer: odometer, marks: marks)
         _sync = State(initialValue: sync)
         #if DEBUG
         if let demoPage {

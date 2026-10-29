@@ -37,6 +37,12 @@ struct OdometerState: Codable, Equatable {
         self = OdometerState()
     }
 
+    mutating func adopt(_ run: OdometerState) {
+        let distance = run.startDate == startDate && run.endDate == endDate ? finalDistance : nil
+        self = run
+        finalDistance = distance
+    }
+
     /// Records `coordinate` as the start position if none was available at Start and
     /// the run is still young enough for it to be close to where Start was pressed.
     mutating func offerStartFix(_ coordinate: Coordinate, at date: Date) {

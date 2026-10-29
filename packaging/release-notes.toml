@@ -6,5 +6,5 @@ version = "1.2.0"
 
 [locales."en-us"]
 whats-new = """
-Peilung now runs on iPhone as well as Apple Watch. The iPhone app does everything the watch app does: compass and bearings with tap cues, navigation to a point, the odometer, your coordinates and marks. Where the watch uses the Digital Crown, the iPhone takes a drag or a tap. The goal you are navigating to and your settings are shared between the two, so a point or bearing set on one shows on the other.
+Peilung now runs on iPhone as well as Apple Watch. The iPhone app does everything the watch app does: compass and bearings with tap cues, navigation to a point, the odometer, your coordinates and marks. Where the watch uses the Digital Crown, the iPhone takes a drag or a tap. With both, the goal you are navigating to, your marks, the odometer and your settings are shared, so a change on one shows on the other.
 """
