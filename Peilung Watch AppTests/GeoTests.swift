@@ -123,6 +123,7 @@ struct UnitsTests {
     }
 }
 
+@MainActor
 struct CompassWarningTests {
     @Test func warnsOnlyAboveTheLimit() {
         #expect(CompassWarning.text(nil) == nil)

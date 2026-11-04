@@ -77,7 +77,7 @@ struct BearingEntryView: View {
 
     private var hint: String {
         if fixed != nil { return "Drag the number to adjust." }
-        if location.magneticHeading != nil { return "Point the top of the iPhone at the landmark, or drag the number." }
+        if location.magneticHeading != nil { return "Point the top of the \(Device.name) at the landmark, or drag the number." }
         return "Drag the number to set a bearing."
     }
 

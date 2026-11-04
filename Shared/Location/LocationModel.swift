@@ -4,6 +4,9 @@
 
 import CoreLocation
 import Observation
+#if os(iOS)
+import UIKit
+#endif
 
 /// Position and heading from Core Location. GPS runs only while the screen is up;
 /// the heading runs only while the Navigate page is showing.
@@ -85,6 +88,19 @@ final class LocationModel: NSObject, CLLocationManagerDelegate {
         manager.stopUpdatingLocation()
         stopHeading()
     }
+
+    #if os(iOS)
+    /// Measures the heading from the top of the screen, which on an iPad turns with it.
+    func followInterfaceOrientation() {
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        manager.headingOrientation = switch scene?.effectiveGeometry.interfaceOrientation {
+        case .portraitUpsideDown: .portraitUpsideDown
+        case .landscapeLeft: .landscapeRight
+        case .landscapeRight: .landscapeLeft
+        default: .portrait
+        }
+    }
+    #endif
 
     func startHeading() {
         guard !isSimulated, headingAvailable else { return }

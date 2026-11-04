@@ -5,6 +5,7 @@
 import SwiftUI
 
 struct OdometerView: View {
+    @ScaledMetric(relativeTo: .largeTitle) private var distanceSize = 40.0
     @Environment(OdometerModel.self) private var odometer
     @Environment(LocationModel.self) private var location
     @Environment(Navigator.self) private var navigator
@@ -28,7 +29,7 @@ struct OdometerView: View {
         let state = odometer.state
         VStack(spacing: 2) {
             Text(shownDistance.map(units.format(meters:)) ?? "—")
-                .font(.system(size: 40, weight: .semibold, design: .rounded).monospacedDigit())
+                .font(.system(size: distanceSize, weight: .semibold, design: .rounded).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(state.phase == .idle ? .secondary : .primary)

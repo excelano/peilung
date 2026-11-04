@@ -37,6 +37,7 @@ enum Compass {
     }
 }
 
+@MainActor
 enum CompassWarning {
     /// Above this the compass is too rough to follow a bearing by.
     static let accuracyLimit = 20.0

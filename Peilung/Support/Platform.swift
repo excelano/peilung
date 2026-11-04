@@ -4,9 +4,11 @@
 
 import SwiftUI
 
-/// The words and looks that differ between the watch and the iPhone.
+/// The words and looks that differ between the watch and the iPhone or iPad.
+@MainActor
 enum Device {
-    static let name = "iPhone"
+    /// "iPhone" or "iPad".
+    static let name = UIDevice.current.model
     /// The goal's title on Navigate, which also becomes the Stop navigating button.
     static let goalTitleFont = Font.body
 

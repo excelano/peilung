@@ -21,6 +21,8 @@ struct RootView: View {
     @AppStorage(NorthReference.storageKey) private var reference = NorthReference.magnetic
     #if os(watchOS)
     @State private var reading = WidgetState.store.load()?.reading
+    #else
+    @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
     var body: some View {
@@ -65,11 +67,21 @@ struct RootView: View {
     private var pages: some View {
         @Bindable var navigator = navigator
         return TabView(selection: $navigator.page) {
-            tab(.navigate, "Navigate", systemImage: "location.north.circle") { NavigateView().padding() }
-            tab(.odometer, "Odometer", systemImage: "figure.walk") { OdometerView().padding() }
-            tab(.here, "Here", systemImage: "mappin.and.ellipse") { HereView().padding() }
+            tab(.navigate, "Navigate", systemImage: "location.north.circle") { NavigateView().padding().dynamicTypeSize(pageText) }
+            tab(.odometer, "Odometer", systemImage: "figure.walk") { OdometerView().padding().dynamicTypeSize(pageText) }
+            tab(.here, "Here", systemImage: "mappin.and.ellipse") { HereView().padding().dynamicTypeSize(pageText) }
             tab(.marks, "Marks", systemImage: "list.bullet") { MarksView() }
         }
+        .background {
+            GeometryReader { geometry in
+                Color.clear.onChange(of: geometry.size, initial: true) { location.followInterfaceOrientation() }
+            }
+        }
+    }
+
+    /// On an iPad the readings are set large, to be read at arm's length on a big screen.
+    private var pageText: ClosedRange<DynamicTypeSize> {
+        sizeClass == .regular ? .accessibility1 ... .accessibility5 : .xSmall ... .accessibility5
     }
 
     private func tab(_ page: Page, _ title: String, systemImage: String, @ViewBuilder content: () -> some View) -> some View {
