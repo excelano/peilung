@@ -8,7 +8,7 @@ import WidgetKit
 #endif
 
 /// The pages, and the sensors each one needs: GPS while the screen is up, the heading
-/// only on Navigate, live pedometer updates only on Odometer. A dimmed screen stops them
+/// only on Navigate, live pedometer updates only on Odometer, which is left out on a device with no step count. A dimmed screen stops them
 /// all, since watchOS can leave the app dimmed in front for hours, and on an always-on
 /// watch the dimmed app can stay `.active`.
 struct RootView: View {
@@ -32,7 +32,10 @@ struct RootView: View {
         #endif
         .onChange(of: scenePhase, initial: true) { updateSensors() }
         .onChange(of: isLuminanceReduced) { updateSensors() }
-        .onChange(of: navigator.page) { updateSensors() }
+        .onChange(of: navigator.page, initial: true) {
+            if navigator.page == .odometer && !odometer.isAvailable { navigator.page = .navigate }
+            updateSensors()
+        }
         #if os(watchOS)
         .onChange(of: widgetState, initial: true) {
             WidgetState.store.save(widgetState)
@@ -55,7 +58,7 @@ struct RootView: View {
         return NavigationStack {
             TabView(selection: $navigator.page) {
                 NavigateView().tag(Page.navigate)
-                OdometerView().tag(Page.odometer)
+                if odometer.isAvailable { OdometerView().tag(Page.odometer) }
                 HereView().tag(Page.here)
                 MarksView().tag(Page.marks)
             }
@@ -68,7 +71,9 @@ struct RootView: View {
         @Bindable var navigator = navigator
         return TabView(selection: $navigator.page) {
             tab(.navigate, "Navigate", systemImage: "location.north.circle") { NavigateView().padding().dynamicTypeSize(pageText) }
-            tab(.odometer, "Odometer", systemImage: "figure.walk") { OdometerView().padding().dynamicTypeSize(pageText) }
+            if odometer.isAvailable {
+                tab(.odometer, "Odometer", systemImage: "figure.walk") { OdometerView().padding().dynamicTypeSize(pageText) }
+            }
             tab(.here, "Here", systemImage: "mappin.and.ellipse") { HereView().padding().dynamicTypeSize(pageText) }
             tab(.marks, "Marks", systemImage: "list.bullet") { MarksView() }
         }

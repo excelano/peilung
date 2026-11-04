@@ -4,6 +4,9 @@
 
 import CoreMotion
 import Foundation
+#if os(iOS)
+import UIKit
+#endif
 
 /// Walking distance since a date. The simulator has no pedometer, so it gets a fake.
 @MainActor
@@ -78,7 +81,14 @@ final class SimulatedPedometer: Pedometer {
     private static let speed = 1.3
     private var timer: Timer?
 
-    var isAvailable: Bool { true }
+    /// An iPad keeps no step count, so the simulated one has none either.
+    var isAvailable: Bool {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom != .pad
+        #else
+        true
+        #endif
+    }
     var isDenied: Bool { false }
 
     func startUpdates(from start: Date, handler: @escaping @MainActor (Result<Double, Error>) -> Void) {

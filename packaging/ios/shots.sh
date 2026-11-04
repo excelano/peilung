@@ -27,7 +27,8 @@ case "$lang" in
     *) echo "shots.sh: no set is written for $lang" >&2; exit 2 ;;
 esac
 # A watch simulator runs the embedded watch app, with its own bundle id.
-case "$(xcrun simctl list devices | grep -F "($device)" | head -1)" in
+kind=$(xcrun simctl list devices | grep -F "($device)" | head -1)
+case "$kind" in
     *Watch*) bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app"/Watch/*.app/Info.plist) ;;
     *) bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist") ;;
 esac
@@ -45,7 +46,11 @@ shot() {
 shot 01-bearing --demo bearing
 shot 02-compass --demo compass
 shot 03-point --demo navigate
-shot 04-odometer --demo odometer
+# An iPad keeps no step count, so it has no Odometer tab.
+case "$kind" in
+    *iPad*) ;;
+    *) shot 04-odometer --demo odometer ;;
+esac
 shot 05-here --demo here
 shot 06-take-bearing --demo bearing --entry bearing
 xcrun simctl terminate "$device" "$bundle" >/dev/null 2>&1 || true
