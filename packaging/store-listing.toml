@@ -30,8 +30,8 @@ Location and step distance are read on the device while a page needs them, and n
 """
 
 [locales."en-us"]
-website = "https://github.com/excelano/peilung"
-support = "https://github.com/excelano/peilung"
+website = "https://anderix.com/peilung/"
+support = "https://excelano.com/support/?app=Peilung&channel=App%20Store"
 privacy = "https://excelano.com/legal/#peilung"
 description = """
 Peilung is a navigation kit for getting around on foot: a compass that takes and holds bearings, a way to any point you choose, a distance odometer and your coordinates. It answers the questions you ask on a trail: which way, how far have I come, where am I, and where have I been. It runs on iPhone, iPad and Apple Watch, and does the same things on each, so it can ride on your wrist, in your hand, or both. On an iPad the compass turns with the screen, upright or sideways; an iPad counts no steps, so it leaves the odometer to the iPhone and watch. With both, the bearing or point you are following, your marks, the odometer and your settings show on each.
