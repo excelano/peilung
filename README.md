@@ -32,7 +32,7 @@ GPS runs only while Peilung is on screen and the display is not dimmed, and on t
 
 ## Building
 
-Open `Peilung.xcodeproj` in Xcode. The `Peilung` scheme builds the iPhone app with the watch app embedded, and archives the two for the App Store; the `Peilung Watch App` scheme builds the watch app alone for a watch or the simulator and runs the tests.
+Peilung is distributed as source rather than through the App Store. Open `Peilung.xcodeproj` in Xcode and set your own team in `Config/Peilung.xcconfig`. The `Peilung` scheme builds the iPhone app with the watch app embedded; the `Peilung Watch App` scheme builds the watch app alone for a watch or the simulator and runs the tests.
 
 Both apps compile `Shared`, which holds the models and the four pages. `Peilung` and `Peilung Watch App` hold what differs by device: the coordinate and bearing entry sheets, the haptics, and the wording and button style in `Support/Platform.swift`.
 

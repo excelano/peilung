@@ -8,7 +8,7 @@ Please do not open public issues for security problems.
 
 ## Supported versions
 
-The latest release receives security fixes. Older versions are not supported. A fix ships in a new App Store release.
+The latest release receives security fixes. Older versions are not supported. Peilung is distributed as source, so a fix reaches you when you build from the latest `main`.
 
 ## What Peilung can access
 
